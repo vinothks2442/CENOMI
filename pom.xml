@@ -1,0 +1,443 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.learning</groupId>
+	<artifactId>Web_Playwright-BDD-Framework</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+
+	<properties>
+		<project.name>Web_Playwright-BDD-Framework</project.name>
+		<maven.compiler.version>3.11.0</maven.compiler.version>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+		<codeid.fillo.version>1.16</codeid.fillo.version>
+		<commons-io.version>1.3.2</commons-io.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<!-- DEFAULT - If you do not pass any value with mvn test, then, this
+		value 
+			will be used -->
+		<org.json.version>20200518</org.json.version>
+		<playwright.version>1.35.0</playwright.version>
+		<testng.version>7.1.0</testng.version>
+		<suiteFile>testng_Local.xml</suiteFile>
+		<aspectj.version>1.9.4</aspectj.version>
+		<browserInstances>1</browserInstances>
+		<cucumber.version>7.4.1</cucumber.version>
+		<selenium.version>4.9.1</selenium.version>
+
+	</properties>
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>3.2.0</version>
+				<executions>
+					<execution>
+						<id>default-clean</id>
+						<phase>clean</phase>
+						<goals>
+							<goal>clean</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- <plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-compiler-plugin</artifactId>
+			<version>3.5.1</version>
+				<configuration>
+					<source>1.8</source>
+			<target>1.8</target>
+				</configuration>
+			</plugin>-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>${maven.compiler.version}</version>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-install-plugin</artifactId>
+				<version>3.1.1</version>
+				<executions>
+					<execution>
+						<id>default-install</id>
+						<phase>install</phase>
+						<goals>
+							<goal>install</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>3.3.1</version>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.1.0</version>
+				<configuration>
+					<testFailureIgnore>true</testFailureIgnore>
+					<systemPropertyVariables>
+						<Browser>${Browser}</Browser>
+						<executionType>${execType}</executionType>
+						<Dimension>${Dimension}</Dimension>
+					</systemPropertyVariables>
+					<suiteXmlFiles>
+						<!-- You can add more than 1 XML files here also -->
+						<!-- <suiteXmlFile>testng.xml</suiteXmlFile> -->
+						<!--<suiteXmlFile>${suiteFile}</suiteXmlFile> -->
+						<suiteXmlFile>src/test/resources/NG_XML/WebPlay.xml</suiteXmlFile>
+					</suiteXmlFiles>
+					<argLine>
+						-javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
+					</argLine>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>org.aspectj</groupId>
+						<artifactId>aspectjweaver</artifactId>
+						<version>${aspectj.version}</version>
+					</dependency>
+				</dependencies>
+			</plugin>
+			<plugin>
+				<groupId>net.masterthought</groupId>
+				<artifactId>maven-cucumber-reporting</artifactId>
+				<version>2.8.0</version>
+				<executions>
+					<execution>
+						<id>execution</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<projectName>${project.name}</projectName>
+							<outputDirectory>
+								${project.build.directory}/cucumber-report-html</outputDirectory>
+							<cucumberOutput>
+								${project.build.directory}/cucumber/cucumber.json</cucumberOutput>
+							<checkBuildResult>false</checkBuildResult>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+	<!-- NEED TO ADD THE CUCUMBER AND SUREFIRE-->
+
+	<dependencies>
+		<!--
+		https://mvnrepository.com/artifact/com.microsoft.playwright/playwright -->
+		<dependency>
+			<groupId>com.microsoft.playwright</groupId>
+			<artifactId>playwright</artifactId>
+			<version>${playwright.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.microsoft.playwright</groupId>
+			<artifactId>driver</artifactId>
+			<version>${playwright.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>io.appium</groupId>
+			<artifactId>java-client</artifactId>
+			<version>7.3.0</version>
+		</dependency>
+
+
+		<!-- https://mvnrepository.com/artifact/org.testng/testng -->
+
+		<!-- <scope>test</scope> -->
+
+		<!--
+		https://mvnrepository.com/artifact/io.github.bonigarcia/webdrivermanager -->
+		<dependency>
+			<groupId>io.github.bonigarcia</groupId>
+			<artifactId>webdrivermanager</artifactId>
+			<version>5.0.1</version>
+		</dependency>
+
+
+		<!-- This dependency helps in Serialization (Java POJO -> JSON) and
+		De-Serialization 
+			(JSON -> Java POJO) -->
+		<!--
+		https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.13.0</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/io.rest-assured/rest-assured -->
+
+
+		<!-- https://mvnrepository.com/artifact/com.github.javafaker/javafaker -->
+		<dependency>
+			<groupId>com.github.javafaker</groupId>
+			<artifactId>javafaker</artifactId>
+			<version>1.0.2</version>
+		</dependency>
+
+
+		<!-- This dependency helps in parsing the HTML -->
+		<!-- https://mvnrepository.com/artifact/org.jsoup/jsoup -->
+		<dependency>
+			<groupId>org.jsoup</groupId>
+			<artifactId>jsoup</artifactId>
+			<version>1.14.2</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/ru.yandex.qatools.ashot/ashot -->
+		<dependency>
+			<groupId>ru.yandex.qatools.ashot</groupId>
+			<artifactId>ashot</artifactId>
+			<version>1.5.4</version>
+		</dependency>
+
+
+		<!-- https://mvnrepository.com/artifact/com.aventstack/extentreports -->
+		<dependency>
+			<groupId>com.aventstack</groupId>
+			<artifactId>extentreports</artifactId>
+			<!-- <version>5.0.6</version> -->
+			<version>5.0.9</version>
+		</dependency>
+
+		<!--https://mvnrepository.com/artifact/com.sun.mail/javax.mail/ -->
+		<dependency>
+			<groupId>com.sun.mail</groupId>
+			<artifactId>javax.mail</artifactId>
+			<version>1.6.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.18.22</version>
+		</dependency>
+
+
+		<!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.11.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.stephenc.monte</groupId>
+			<artifactId>monte-screen-recorder</artifactId>
+			<version>0.7.7.0</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.zeroturnaround/zt-zip -->
+		<dependency>
+			<groupId>org.zeroturnaround</groupId>
+			<artifactId>zt-zip</artifactId>
+			<version>1.14</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.googlecode.json-simple</groupId>
+			<artifactId>json-simple</artifactId>
+			<version>1.1.1</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-csv -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-csv</artifactId>
+			<version>1.10.0</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.w3c/dom -->
+		<dependency>
+			<groupId>org.w3c</groupId>
+			<artifactId>dom</artifactId>
+			<version>2.3.0-jaxb-1.0.6</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>5.2.3</version>
+		</dependency>
+		<dependency>
+			<groupId>com.opencsv</groupId>
+			<artifactId>opencsv</artifactId>
+			<version>5.7.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.mysql</groupId>
+			<artifactId>mysql-connector-j</artifactId>
+			<version>8.0.33</version>
+		</dependency>
+		<!-- <dependency>
+			<groupId>com.epam.reportportal</groupId>
+		<artifactId>agent-java-testng</artifactId>
+			<version>5.1.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.epam.reportportal</groupId>
+		<artifactId>logger-java-log4j</artifactId>
+			<version>5.1.4</version>
+		<exclusions>
+				<exclusion>
+					<groupId>log4j</groupId>
+		<artifactId>log4j</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>-->
+
+		<!--<dependency>
+			<groupId>com.epam.reportportal</groupId>
+			<artifactId>agent-java-cucumber</artifactId>
+			<version>5.1.0-RC-2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.epam.reportportal</groupId>
+			<artifactId>logger-java-logback</artifactId>
+			<version>5.0.3</version>
+		</dependency>-->
+
+
+		<dependency>
+			<groupId>org.testng</groupId>
+			<artifactId>testng</artifactId>
+			<version>${testng.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.yaml</groupId>
+			<artifactId>snakeyaml</artifactId>
+			<version>1.30</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.awaitility</groupId>
+			<artifactId>awaitility</artifactId>
+			<version>4.0.2</version>
+		</dependency>
+		<!--<dependency>
+			<groupId>com.epam.reportportal</groupId>
+			<artifactId>client-java</artifactId>
+			<version>5.1.9</version>
+			<scope>compile</scope>
+		</dependency>-->
+		<dependency>
+			<groupId>com.codoid.products</groupId>
+			<artifactId>fillo</artifactId>
+			<version>${codeid.fillo.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>${commons-io.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>${org.json.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.jayway.jsonpath</groupId>
+			<artifactId>json-path</artifactId>
+			<version>2.4.0</version>
+		</dependency>
+		<dependency>
+			<groupId>net.java.dev.jna</groupId>
+			<artifactId>jna-platform</artifactId>
+			<version>5.2.0</version>
+		</dependency>
+		<dependency>
+			<groupId>net.thucydides</groupId>
+			<artifactId>thucydides-core</artifactId>
+			<version>0.9.275</version>
+		</dependency>
+		<!-- Cucumber -->
+		<!-- https://mvnrepository.com/artifact/io.cucumber/cucumber-core -->
+		<dependency>
+			<groupId>io.cucumber</groupId>
+			<artifactId>cucumber-core</artifactId>
+			<version>${cucumber.version}</version>
+		</dependency>
+		<!--
+		https://mvnrepository.com/artifact/net.masterthought/cucumber-reporting -->
+		<dependency>
+			<groupId>net.masterthought</groupId>
+			<artifactId>cucumber-reporting</artifactId>
+			<version>5.7.0</version>
+		</dependency>
+
+
+		<!-- https://mvnrepository.com/artifact/io.qameta.allure/allure-testng -->
+		<!-- <dependency>
+    <groupId>io.qameta.allure</groupId>
+		<artifactId>allure-cucumber4-jvm</artifactId>
+    <version>2.13.1</version>
+		</dependency>-->
+
+		<!-- https://mvnrepository.com/artifact/io.cucumber/cucumber-java -->
+		<dependency>
+			<groupId>io.cucumber</groupId>
+			<artifactId>cucumber-java</artifactId>
+			<version>${cucumber.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.cucumber</groupId>
+			<artifactId>cucumber-testng</artifactId>
+			<version>${cucumber.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>junit</groupId>
+					<artifactId>junit</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.aventstack/extentreports -->
+		<!--<dependency>
+			<groupId>com.aventstack</groupId>
+			<artifactId>extentreports</artifactId>
+			<version>4.1.1</version>
+		</dependency>-->
+		<dependency>
+			<groupId>tech.grasshopper</groupId>
+			<artifactId>extentreports-cucumber7-adapter</artifactId>
+			<version>1.12.0</version>
+			<exclusions>
+				<exclusion>
+					<groupId>io.cucumber</groupId>
+					<artifactId>cucumber-java</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>io.cucumber</groupId>
+					<artifactId>cucumber-core</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>io.qameta.allure</groupId>
+			<artifactId>allure-cucumber7-jvm</artifactId>
+			<version>2.18.1</version>
+		</dependency>
+		<dependency>
+			<groupId>de.monochromata.cucumber</groupId>
+			<artifactId>reporting-plugin</artifactId>
+			<version>5.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.epam.reportportal</groupId>
+			<artifactId>agent-java-cucumber</artifactId>
+			<version>5.1.2</version>
+		</dependency>
+	</dependencies>
+</project>
