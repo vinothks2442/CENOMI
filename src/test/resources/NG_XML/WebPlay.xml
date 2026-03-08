@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Suite">
+	<test name="Web">
+	<!--<parameter name="browser" value="chrome" /> -->
+		<classes>
+			<class name="com.web.test.automation.runner.Playground"></class>
+			<!--<class name="com.web.test.automation.runner.FailedPlayground"></class>-->
+		</classes>
+	</test>
+</suite> <!-- Suite -->
