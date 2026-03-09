@@ -164,7 +164,7 @@
 		<dependency>
 			<groupId>io.github.bonigarcia</groupId>
 			<artifactId>webdrivermanager</artifactId>
-			<version>5.0.1</version>
+			<version>6.1.0</version>
 		</dependency>
 
 
@@ -176,7 +176,7 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>2.13.0</version>
+			<version>2.14.2</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/io.rest-assured/rest-assured -->
@@ -232,7 +232,7 @@
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
-			<version>2.11.0</version>
+			<version>2.14.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.stephenc.monte</groupId>
@@ -277,7 +277,7 @@
 		<dependency>
 			<groupId>com.mysql</groupId>
 			<artifactId>mysql-connector-j</artifactId>
-			<version>8.0.33</version>
+			<version>8.1.0</version>
 		</dependency>
 		<!-- <dependency>
 			<groupId>com.epam.reportportal</groupId>
@@ -313,13 +313,13 @@
 		<dependency>
 			<groupId>org.testng</groupId>
 			<artifactId>testng</artifactId>
-			<version>${testng.version}</version>
+			<version>7.7.0</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.yaml</groupId>
 			<artifactId>snakeyaml</artifactId>
-			<version>1.30</version>
+			<version>2.0</version>
 		</dependency>
 
 		<dependency>
@@ -346,7 +346,7 @@
 		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
-			<version>${org.json.version}</version>
+			<version>20230227</version>
 		</dependency>
 		<dependency>
 			<groupId>com.jayway.jsonpath</groupId>

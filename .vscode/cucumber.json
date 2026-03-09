@@ -1,0 +1,8 @@
+{
+  "default": {
+    "require": [
+      "src/test/java/com/web/test/automation/steps_definitions/**/*.java"
+    ],
+    "format": ["progress", "html:target/cucumber-reports/cucumber-report.html"]
+  }
+}
