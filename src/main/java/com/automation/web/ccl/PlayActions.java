@@ -1,4 +1,6 @@
 package com.automation.web.ccl;
+import com.automation.web.common_utils.ConfigReader;
+import com.automation.web.common_utils.EmailOTPReader;
 
 import static org.testng.Assert.assertEquals;
 
@@ -46,6 +48,14 @@ public class PlayActions {
 		ReportManager.logInfo("Successfully clicked on  -  " + info);
 	}
 
+	public String innerHTML(String locator) {
+		try {
+			return page.innerHTML(locator);
+		} catch (Exception e) {
+			throw new RuntimeException("Unable to get innerHTML for locator: " + locator);
+		}
+	}
+
 	public void fill(String locator, String value, String info) {
 		page.fill(locator, value);
 		System.out.println("Successfully entered value -  " + value + " in " + info + " box");
@@ -90,6 +100,29 @@ public class PlayActions {
         List<String> optionLabels = selectElement.locator("option").allInnerTexts();
         System.out.println("Option labels: " + optionLabels);
         return optionLabels;
+	}
+
+	public void selectOptionFromDropdown(String locator, String value) {
+		Locator options = page.locator(locator);
+		int count = options.count();
+	
+		for (int i = 0; i < count; i++) {
+			String text = options.nth(i).innerText();
+			System.out.println("Text: " + text);
+			
+			if (text != null && text.trim().equalsIgnoreCase(value)) {
+				options.nth(i).click();
+				return;
+			}
+		}
+	
+		throw new RuntimeException("Option not found: " + value);
+	}
+
+	public void waitForSelector(String locator, double timeout, String info) {
+		page.waitForSelector(locator, new Page.WaitForSelectorOptions().setTimeout(timeout));
+		System.out.println("Successfully waited for selector -  " + info);
+		ReportManager.logInfo("Successfully waited for selector -  " + info);
 	}
 	
 	public boolean isVisibleInsideFrame(String frameLocator, String elementLocator, String info) {
@@ -174,6 +207,37 @@ public class PlayActions {
 		ReportManager.logInfo("Successfully switched to default page -  " + info);
 		System.out.println("Successfully switched to default page -  " + info);
 	}
+
+	public void loginWithMicrosoft(String emailTextbox,
+		String nextButton,
+		String sendCodeButton,
+		String otpTextbox,
+		String verifyButton) throws Exception {
+
+page.fill(emailTextbox, ConfigReader.getValue("adminEmail"));
+page.click(nextButton);
+page.click(sendCodeButton);
+
+page.waitForSelector(otpTextbox);
+
+String otp = EmailOTPReader.getOTP(
+ConfigReader.getValue("adminEmail"),
+ConfigReader.getValue("emailPassword")
+);
+
+System.out.println("Fetched OTP : " + otp);
+ReportManager.logInfo("Fetched OTP from email");
+
+// Handle 6 OTP input boxes
+for (int i = 0; i < otp.length(); i++) {
+
+String indexedOtpLocator = "(" + otpTextbox + ")[" + (i + 1) + "]";
+
+page.fill(indexedOtpLocator, String.valueOf(otp.charAt(i)));
+}
+
+page.click(verifyButton);
+}
 
 	public String textContent(String locator) {
 		String Text = page.textContent(locator);

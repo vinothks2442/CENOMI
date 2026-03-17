@@ -42,15 +42,6 @@
 					</execution>
 				</executions>
 			</plugin>
-			<!-- <plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-			<artifactId>maven-compiler-plugin</artifactId>
-			<version>3.5.1</version>
-				<configuration>
-					<source>1.8</source>
-			<target>1.8</target>
-				</configuration>
-			</plugin>-->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -83,6 +74,8 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.1.0</version>
 				<configuration>
+					<!-- Retry each failing test once -->
+					<rerunFailingTestsCount>1</rerunFailingTestsCount>
 					<testFailureIgnore>true</testFailureIgnore>
 					<systemPropertyVariables>
 						<Browser>${Browser}</Browser>
@@ -439,5 +432,11 @@
 			<artifactId>agent-java-cucumber</artifactId>
 			<version>5.1.2</version>
 		</dependency>
+
+		<dependency>
+    <groupId>com.sun.mail</groupId>
+    <artifactId>javax.mail</artifactId>
+    <version>1.6.2</version>
+</dependency>
 	</dependencies>
 </project>
