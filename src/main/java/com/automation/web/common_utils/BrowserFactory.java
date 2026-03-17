@@ -192,17 +192,33 @@ public class BrowserFactory {
     }
 
     public void closeBrowser() {
+        try {
+            if (tlBrowserContext.get() != null) {
+                try {
+                    tlBrowserContext.get().close();
+                } catch (Exception ignored) {
+                }
+            }
 
-        if (tlBrowserContext.get() != null) {
-            tlBrowserContext.get().close();
-        }
+            if (tlBrowser.get() != null) {
+                try {
+                    tlBrowser.get().close();
+                } catch (Exception ignored) {
+                }
+            }
 
-        if (tlBrowser.get() != null) {
-            tlBrowser.get().close();
-        }
-
-        if (tlPlaywright.get() != null) {
-            tlPlaywright.get().close();
+            if (tlPlaywright.get() != null) {
+                try {
+                    tlPlaywright.get().close();
+                } catch (Exception ignored) {
+                }
+            }
+        } finally {
+            // Ensure we never hold stale/closed instances in ThreadLocals
+            try { tlPage.remove(); } catch (Exception ignored) {}
+            try { tlBrowserContext.remove(); } catch (Exception ignored) {}
+            try { tlBrowser.remove(); } catch (Exception ignored) {}
+            try { tlPlaywright.remove(); } catch (Exception ignored) {}
         }
     }
 

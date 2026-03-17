@@ -20,9 +20,11 @@ public class PageEvent implements ITestListener {
 
     private boolean shouldCloseBrowser(boolean isFailure) {
         if (isFailure) {
+            // Default false: Cucumber hooks handle teardown in this project
             return Boolean.parseBoolean(System.getProperty(SYS_CLOSE_BROWSER_ON_FAILURE, "false"));
         }
-        return Boolean.parseBoolean(System.getProperty(SYS_CLOSE_BROWSER_ON_PASS, "true"));
+        // Default false: avoids double-close with Cucumber @After hook (common in TestNGCucumberRunner)
+        return Boolean.parseBoolean(System.getProperty(SYS_CLOSE_BROWSER_ON_PASS, "false"));
     }
 
     @Override

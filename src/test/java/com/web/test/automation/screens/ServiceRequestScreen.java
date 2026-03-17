@@ -89,9 +89,13 @@ PlayActions play = new PlayActions();
 	String commentTextarea = "css=div.mb-4 textarea, textarea";
 	String commentSubmitButton = "css=div.mb-4 button.group, button:has-text('Submit')";
 	String toastContainer = "css=.Toastify, [role='status'], [aria-live='polite']";
+	// More precise Toastify selectors (helps when container exists but body is empty)
+	String toastAny = "css=.Toastify__toast, .Toastify__toast-body";
 
 	// Create SR success dialog (from JSON)
 	String goToServiceRequestsButton = "xpath=//button[contains(normalize-space(.),'Go to Service Requests') or contains(normalize-space(.),'Go to Service')]";
+	// SR number appears in success dialog / summary text in many UIs
+	String srNumberText = "xpath=//*[contains(translate(normalize-space(.),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'sr') and contains(translate(normalize-space(.),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'number')]";
 
 	private String lastCreatedSrNumber = null;
 	String companyDropdown = "//div[text()='Select Company Name']/following-sibling::div";
@@ -247,11 +251,22 @@ play.click(createSRButton,"Create SR");
 	}
 
 	public void assertRequestNotSubmitted() {
-		// Best-effort: if validation is present, request is not submitted.
-		play.waitForVisible(createFormContainer, 8000, "Create SR form still open");
-		// any validation message should be present
-		boolean anyError = play.getPage().locator(genericErrorMessages).count() > 0 || play.getPage().locator(subjectValidation).count() > 0;
-		play.verifyIntValues(anyError ? 1 : 0, 1);
+		SubmissionSnapshot snap = waitForSubmissionSnapshot(15000);
+		String srNumber = extractSrNumberBestEffort(snap);
+
+		// Negative: must NOT have success toast/dialog, must have validation errors, and must NOT have SR number.
+		boolean ok = !snap.hasSuccessSignal && snap.hasValidationErrors && (srNumber == null || srNumber.isBlank());
+		if (!ok) {
+			System.out.println(
+					"SR not-submitted assertion failed. hasSuccessSignal=" + snap.hasSuccessSignal
+							+ ", hasValidationErrors=" + snap.hasValidationErrors
+							+ ", toastText=" + (snap.toastText == null ? "null" : snap.toastText.replaceAll("\\s+", " ").trim())
+							+ ", firstErrorText=" + (snap.firstErrorText == null ? "null" : snap.firstErrorText.replaceAll("\\s+", " ").trim())
+							+ ", extractedSrNumber=" + (srNumber == null ? "null" : srNumber)
+							+ ", createFormVisible=" + snap.createFormVisible
+			);
+		}
+		play.verifyIntValues(ok ? 1 : 0, 1);
 	}
 
 	public void enterSubjectMoreThan255Chars() {
@@ -845,16 +860,27 @@ play.click(createSRButton,"Create SR");
 	}
 
 	public void assertServiceRequestSubmittedSuccessfully() {
-		waitForSubmissionResult(30000);
-		// success is either: "Go to Service Requests" dialog/button OR Toastify appears without validation errors
-		boolean hasGoToBtn = play.getPage().locator(goToServiceRequestsButton).count() > 0;
-		boolean hasToast = play.getPage().locator(toastContainer).count() > 0;
-		boolean hasErrors = play.getPage().locator(genericErrorMessages).count() > 0 || play.getPage().locator(subjectValidation).count() > 0;
-		play.verifyIntValues((hasGoToBtn || (hasToast && !hasErrors)) ? 1 : 0, 1);
+		SubmissionSnapshot snap = waitForSubmissionSnapshot(45000);
 
-		if (hasGoToBtn) {
-			captureCreatedSrNumberFromSuccessDialog();
+		// Positive: must have a success signal AND an SR number.
+		String srNumber = extractSrNumberBestEffort(snap);
+		boolean hasSrNumber = srNumber != null && !srNumber.isBlank();
+
+		boolean ok = snap.hasSuccessSignal && hasSrNumber;
+		if (!ok) {
+			System.out.println(
+					"SR submit assertion failed. hasSuccessSignal=" + snap.hasSuccessSignal
+							+ ", hasValidationErrors=" + snap.hasValidationErrors
+							+ ", toastText=" + (snap.toastText == null ? "null" : snap.toastText.replaceAll("\\s+", " ").trim())
+							+ ", firstErrorText=" + (snap.firstErrorText == null ? "null" : snap.firstErrorText.replaceAll("\\s+", " ").trim())
+							+ ", extractedSrNumber=" + (srNumber == null ? "null" : srNumber)
+							+ ", createFormVisible=" + snap.createFormVisible
+							+ ", submitVisible=" + snap.submitVisible
+			);
 		}
+		play.verifyIntValues(ok ? 1 : 0, 1);
+
+		lastCreatedSrNumber = srNumber;
 	}
 
 	public void goToServiceRequestsFromSuccessDialog() {
@@ -878,18 +904,164 @@ play.click(createSRButton,"Create SR");
 	// -------- Internal helpers --------
 
 	private void waitForSubmissionResult(int timeoutMs) {
-		// Wait until either success dialog appears or any validation error appears.
+		// Wait until either success dialog appears, a toast appears, or any validation error appears.
 		long end = System.currentTimeMillis() + timeoutMs;
 		while (System.currentTimeMillis() < end) {
 			boolean hasGo = play.getPage().locator(goToServiceRequestsButton).count() > 0;
+			boolean hasToast = play.getPage().locator(toastAny).count() > 0 || play.getPage().locator(toastContainer).count() > 0;
 			boolean hasErr = play.getPage().locator(genericErrorMessages).count() > 0 || play.getPage().locator(subjectValidation).count() > 0;
-			if (hasGo || hasErr) return;
+			if (hasGo || hasToast || hasErr) return;
 			try {
-				Thread.sleep(250);
-			} catch (InterruptedException ignored) {
-				return;
+				play.getPage().waitForTimeout(250);
+			} catch (Exception ignored) {
+				// best-effort
 			}
 		}
+	}
+
+	private static class SubmissionSnapshot {
+		final boolean hasSuccessSignal;
+		final boolean hasValidationErrors;
+		final boolean createFormVisible;
+		final boolean submitVisible;
+		final String toastText;
+		final String firstErrorText;
+
+		private SubmissionSnapshot(boolean hasSuccessSignal,
+		                           boolean hasValidationErrors,
+		                           boolean createFormVisible,
+		                           boolean submitVisible,
+		                           String toastText,
+		                           String firstErrorText) {
+			this.hasSuccessSignal = hasSuccessSignal;
+			this.hasValidationErrors = hasValidationErrors;
+			this.createFormVisible = createFormVisible;
+			this.submitVisible = submitVisible;
+			this.toastText = toastText;
+			this.firstErrorText = firstErrorText;
+		}
+	}
+
+	private SubmissionSnapshot waitForSubmissionSnapshot(int timeoutMs) {
+		long end = System.currentTimeMillis() + timeoutMs;
+
+		while (System.currentTimeMillis() < end) {
+			boolean hasGoToBtn = play.getPage().locator(goToServiceRequestsButton).count() > 0;
+
+			// Prefer Toastify toast nodes (container may exist but be empty)
+			Locator toastLoc = play.getPage().locator(toastAny);
+			String toastText = null;
+			try {
+				if (toastLoc.count() > 0) toastText = toastLoc.first().textContent();
+			} catch (Exception ignored) {
+			}
+			boolean hasToastText = toastText != null && !toastText.trim().isEmpty();
+			boolean isErrorToast = toastText != null
+					&& Pattern.compile("\\b(error|failed|failure|invalid|not\\s+allowed|forbidden|unauthori[sz]ed)\\b", Pattern.CASE_INSENSITIVE)
+					.matcher(toastText).find();
+			boolean hasSuccessToast = hasToastText && !isErrorToast;
+
+			// Validation errors (ignore the static "*Indicates required field" hint)
+			Locator errLoc = play.getPage().locator(genericErrorMessages);
+			int errCount = 0;
+			String firstErr = null;
+			try {
+				errCount = errLoc.count();
+				if (errCount > 0) firstErr = errLoc.first().textContent();
+			} catch (Exception ignored) {
+			}
+			String firstErrNorm = firstErr == null ? "" : firstErr.replaceAll("\\s+", " ").trim();
+			boolean hasValidationErrors = errCount > 0
+					&& !firstErrNorm.isEmpty()
+					&& !firstErrNorm.toLowerCase(Locale.ROOT).contains("indicates required field");
+
+			boolean createFormVisible = false;
+			boolean submitVisible = false;
+			try {
+				Locator form = play.getPage().locator(createFormContainer);
+				createFormVisible = form.count() > 0 && form.first().isVisible();
+			} catch (Exception ignored) {
+			}
+			try {
+				Locator submit = play.getPage().locator(submitButton);
+				submitVisible = submit.count() > 0 && submit.first().isVisible();
+			} catch (Exception ignored) {
+			}
+
+			boolean hasSuccessSignal = hasGoToBtn || hasSuccessToast;
+
+			if (hasSuccessSignal || hasValidationErrors) {
+				return new SubmissionSnapshot(
+						hasSuccessSignal,
+						hasValidationErrors,
+						createFormVisible,
+						submitVisible,
+						toastText,
+						firstErrNorm.isEmpty() ? null : firstErrNorm
+				);
+			}
+
+			// Playwright-friendly wait to avoid Thread.sleep()
+			try {
+				play.getPage().waitForTimeout(250);
+			} catch (Exception ignored) {
+			}
+		}
+
+		boolean createFormVisible = false;
+		boolean submitVisible = false;
+		try {
+			Locator form = play.getPage().locator(createFormContainer);
+			createFormVisible = form.count() > 0 && form.first().isVisible();
+		} catch (Exception ignored) {
+		}
+		try {
+			Locator submit = play.getPage().locator(submitButton);
+			submitVisible = submit.count() > 0 && submit.first().isVisible();
+		} catch (Exception ignored) {
+		}
+		return new SubmissionSnapshot(false, false, createFormVisible, submitVisible, null, null);
+	}
+
+	private String extractSrNumberBestEffort(SubmissionSnapshot snap) {
+		// 1) Success dialog path (existing helper)
+		try {
+			if (play.getPage().locator(goToServiceRequestsButton).count() > 0) {
+				captureCreatedSrNumberFromSuccessDialog();
+				if (lastCreatedSrNumber != null && !lastCreatedSrNumber.isBlank()) return lastCreatedSrNumber;
+			}
+		} catch (Exception ignored) {
+		}
+
+		// 2) Try toast text
+		String fromToast = extractSrNumberFromText(snap == null ? null : snap.toastText);
+		if (fromToast != null) return fromToast;
+
+		// 3) Try SR number label area
+		try {
+			if (play.getPage().locator(srNumberText).count() > 0) {
+				String txt = play.getPage().locator(srNumberText).first().textContent();
+				String fromLbl = extractSrNumberFromText(txt);
+				if (fromLbl != null) return fromLbl;
+			}
+		} catch (Exception ignored) {
+		}
+
+		// 4) Fallback: whole page text (parse only)
+		try {
+			String body = play.getPage().textContent("css=body");
+			return extractSrNumberFromText(body);
+		} catch (Exception ignored) {
+			return null;
+		}
+	}
+
+	private String extractSrNumberFromText(String text) {
+		if (text == null) return null;
+		Matcher m = Pattern.compile("\\bSR\\s*#?\\s*([0-9]{3,})\\b", Pattern.CASE_INSENSITIVE).matcher(text);
+		if (m.find()) return m.group(1);
+		Matcher m2 = Pattern.compile("\\b([0-9]{6,})\\b").matcher(text);
+		return m2.find() ? m2.group(1) : null;
 	}
 
 	private void captureCreatedSrNumberFromSuccessDialog() {
