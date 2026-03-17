@@ -20,7 +20,9 @@ public class CucumberHooks {
 	public static ArrayList<String> totalTestCases = new ArrayList<String>();
 
 	private static String str_Execution_TYPE = "Web_UI";
-	public String str_BrowserType = System.getProperty("Browser");
+	public String str_BrowserType = System.getProperty("Browser", "chrome");
+	private static final String SYS_CLOSE_BROWSER_ON_FAILURE = "closeBrowserOnFailure";
+	private static final String SYS_CLOSE_BROWSER_ON_PASS = "closeBrowserOnPass";
 	BrowserFactory browserfactory = BrowserFactory.getInstance();
 	public static String featureFileName;
 
@@ -76,8 +78,10 @@ public class CucumberHooks {
 		 * }
 		 */
 
-		browserfactory.getBrowserContext().tracing().stop(new Tracing.StopOptions().setPath(Paths.get(
-				System.getProperty("user.dir") + "/TracingReports/" + dateStamp + "/" + scenario.getName() + ".zip")));
+		if (browserfactory.getBrowserContext() != null) {
+			browserfactory.getBrowserContext().tracing().stop(new Tracing.StopOptions().setPath(Paths.get(
+					System.getProperty("user.dir") + "/TracingReports/" + dateStamp + "/" + scenario.getName() + ".zip")));
+		}
 		if (str_Execution_TYPE.equalsIgnoreCase("Web_UI")) {
 			totalTestCases.add(scenario.getName());
 			if (totalTestCases.contains(scenario.getName())) {
@@ -94,11 +98,22 @@ public class CucumberHooks {
 			}
 			if (scenario.isFailed()) {
 				failedTests.add(scenario.getName());
-				final byte[] screenshot = (Screenshot_Util.takeScreenshot().getBytes());
-				scenario.attach(screenshot, "image/png", featureFileName);
-				scenario.log("ScreenShot Attached");
+				String base64Screenshot = Screenshot_Util.takeScreenshot();
+				if (base64Screenshot != null && !base64Screenshot.isEmpty()) {
+					final byte[] screenshot = base64Screenshot.getBytes();
+					scenario.attach(screenshot, "image/png", featureFileName);
+					scenario.log("ScreenShot Attached");
+				} else {
+					System.out.println("Screenshot not attached: empty base64 string");
+				}
+				if (Boolean.parseBoolean(System.getProperty(SYS_CLOSE_BROWSER_ON_FAILURE, "false"))) {
+					browserfactory.closeBrowser();
+				}
 			} else {
 				passedTests.add(scenario.getName());
+				if (Boolean.parseBoolean(System.getProperty(SYS_CLOSE_BROWSER_ON_PASS, "true"))) {
+					browserfactory.closeBrowser();
+				}
 			}
 
 		} else {
