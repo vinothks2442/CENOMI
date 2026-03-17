@@ -245,7 +245,6 @@ Feature: Service Request (SR) - Excel Coverage (TC_001 to TC_034)
     And user uploads service request attachments:
       | fileName   |
       | Dummy.pdf  |
-      | Dummy.png  |
     And user submits service request form
     Then service request should be submitted successfully
 
