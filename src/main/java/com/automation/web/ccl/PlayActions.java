@@ -290,6 +290,7 @@ page.click(verifyButton);
 		return attributeText;
 	}
 	
+	
 	public void isClickable(String Elelocator, String info) {
 		Locator locator = page.locator(Elelocator);
 
