@@ -17,7 +17,7 @@ import io.cucumber.testng.TestNGCucumberRunner;
 @Listeners({ SuiteEvent.class, PageEvent.class })
 
 @CucumberOptions(features = { "src/test/java/com/web/test/automation/feature" }, glue = {
-		"com.web.test.automation.hooks", "com.web.test.automation.steps_definitions" }, tags = "@AdminSignIn", 
+		"com.web.test.automation.hooks", "com.web.test.automation.steps_definitions" }, tags = "@SR_E2E_AllValid", 
 				plugin = {
 				"pretty", "html:target/site/cucumber-pretty/cucumber.html", "json:target/cucumber/cucumber.json",
 				"rerun:target/rerun.txt",

@@ -1,7 +1,6 @@
 package com.automation.web.NG_Listeners;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 
 import org.testng.ITestContext;
 import org.testng.ITestListener;
@@ -11,118 +10,117 @@ import com.automation.web.Report_Utils.ReportManager;
 import com.automation.web.common_utils.BrowserFactory;
 import com.automation.web.common_utils.VideoRecord;
 import com.aventstack.extentreports.markuputils.ExtentColor;
-import com.aventstack.extentreports.markuputils.Markup;
 import com.aventstack.extentreports.markuputils.MarkupHelper;
-import com.microsoft.playwright.Tracing;
 
 public class PageEvent implements ITestListener {
-	
-	public static String strBrowser;
 
-	// RetryFailedTests retry = new RetryFailedTests();
-	@Override
-	public void onTestStart(ITestResult arg0) {
-		System.out.println("+++++++++++++++++++++onTestStart++++++++++++++++++++");
-		// ReportManager.startTest(arg0.getMethod().getMethodName(),"WEB");
-		strBrowser = System.getProperty("Browser");
-		System.out.println("Execution started @ " + strBrowser + " browser & for type : Web UI");
-		try {
+    public static String strBrowser;
+    private static final String SYS_CLOSE_BROWSER_ON_FAILURE = "closeBrowserOnFailure";
+    private static final String SYS_CLOSE_BROWSER_ON_PASS = "closeBrowserOnPass";
 
-			// initDriver.startWebDriver();
-			VideoRecord.startRecord(arg0.getMethod().getMethodName());
+    private boolean shouldCloseBrowser(boolean isFailure) {
+        if (isFailure) {
+            return Boolean.parseBoolean(System.getProperty(SYS_CLOSE_BROWSER_ON_FAILURE, "false"));
+        }
+        return Boolean.parseBoolean(System.getProperty(SYS_CLOSE_BROWSER_ON_PASS, "true"));
+    }
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+    @Override
+    public void onTestStart(ITestResult result) {
 
-	}
+        System.out.println("+++++++++++++++++++++onTestStart++++++++++++++++++++");
 
-	@Override
-	public void onTestSuccess(ITestResult iTestResult) {
-		// driverFactory.getWebDriver().quit();
+        // ✅ START EXTENT TEST
+        ReportManager.startTest(result.getMethod().getMethodName(), "WEB");
 
-		try {
-			BrowserFactory.getInstance().getPlaywright().close();
-			VideoRecord.stopRecord();
-			// initDriver.tearDownWebDriver();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-//		
-//		try {
-////			 Runtime.getRuntime().exec("taskkill /F /IM ChromeDriver.exe");
-////			Runtime.getRuntime().exec("taskkill /f /im chrome.exe");
-////			 Runtime.getRuntime().exec("taskkill /f /im chromedriver.exe");
-////			Runtime.getRuntime().exec("taskkill /f /im geckodriver.exe");
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+        strBrowser = System.getProperty("Browser", "chromium");
 
-	}
+        System.out.println("Execution started @ " + strBrowser + " browser & for type : Web UI");
 
-	@Override
-	public void onTestFailure(ITestResult iTestResult) {
+        try {
 
-		// retry.retry(iTestResult);
-		System.out.println("+++++++++++++++++++++onTestFailure++++++++++++++++++++");
-		ReportManager.logFail(iTestResult.getThrowable().toString());
+            VideoRecord.startRecord(result.getMethod().getMethodName());
 
-		try {
-			ReportManager.logScreenshot();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		ReportManager.endCurrentTest();
-		// driverFactory.getWebDriver().close();
+    }
 
-		try {
+    @Override
+    public void onTestSuccess(ITestResult result) {
 
-			VideoRecord.stopRecord();
-			BrowserFactory.getInstance().getPlaywright().close();
+        try {
 
-			// initDriver.tearDownWebDriver();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+            if (shouldCloseBrowser(false)) {
+                BrowserFactory.getInstance().closeBrowser();
+            }
 
-		/*
-		 * try { Runtime.getRuntime().exec("taskkill /f /im chrome.exe");
-		 * Runtime.getRuntime().exec("taskkill /f /im chromedriver.exe");
-		 * Runtime.getRuntime().exec("taskkill /f /im geckodriver.exe"); } catch
-		 * (IOException e) { // TODO Auto-generated catch block e.printStackTrace(); }
-		 */
-	}
+            VideoRecord.stopRecord();
 
-	@Override
-	public void onTestSkipped(ITestResult arg0) {
-		// TODO Auto-generated method stub
+        } catch (Exception e) {
 
-		// ExtentLogger.skip("<b><i>" + result.getThrowable().toString() + "</i></b>");
-		String logText = "<b>" + arg0.getMethod().getMethodName() + " is skipped.</b>";
-		Markup markup_message = MarkupHelper.createLabel(logText, ExtentColor.YELLOW);
+            e.printStackTrace();
+        }
 
-	}
+    }
 
-	@Override
-	public void onFinish(ITestContext arg0) {
-		// TODO Auto-generated method stub
+    @Override
+    public void onTestFailure(ITestResult result) {
 
-	}
+        System.out.println("+++++++++++++++++++++onTestFailure++++++++++++++++++++");
 
-	@Override
-	public void onStart(ITestContext arg0) {
+        if (ReportManager.getCurrentTest() != null) {
 
-		// strBrowser = arg0.getCurrentXmlTest().getParameter("browser");
-	}
+            ReportManager.logFail(result.getThrowable().toString());
 
-	@Override
-	public void onTestFailedButWithinSuccessPercentage(ITestResult arg0) {
-		// TODO Auto-generated method stub
+            try {
 
-	}
+                ReportManager.logScreenshot();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            ReportManager.endCurrentTest();
+        }
+
+        try {
+
+            VideoRecord.stopRecord();
+
+            if (shouldCloseBrowser(true)) {
+                BrowserFactory.getInstance().closeBrowser();
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    public void onTestSkipped(ITestResult result) {
+
+        String logText = "<b>" + result.getMethod().getMethodName() + " is skipped.</b>";
+
+        MarkupHelper.createLabel(logText, ExtentColor.YELLOW);
+
+    }
+
+    @Override
+    public void onFinish(ITestContext context) {
+
+    }
+
+    @Override
+    public void onStart(ITestContext context) {
+
+    }
+
+    @Override
+    public void onTestFailedButWithinSuccessPercentage(ITestResult result) {
+
+    }
 }
