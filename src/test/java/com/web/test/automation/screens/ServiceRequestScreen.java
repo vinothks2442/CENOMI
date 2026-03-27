@@ -19,6 +19,7 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+
 public class ServiceRequestScreen {
 
 PlayActions play = new PlayActions();
@@ -131,13 +132,16 @@ play.click(createSRButton,"Create SR");
 	public void assertListLoadedOrEmptyState() {
 		Locator rows = getResultRowsLocator();
 		if (rows.count() > 0) {
-			play.verifyIntValues(1, 1);
+			play.verifyIntValues(rows.count() > 0 ? 1 : 0, 1);
 			return;
 		}
 		// If there are no rows, this may simply mean there is currently no data.
 		// For TC_001 we treat "page + controls visible" as enough to say list loaded.
 		assertListViewControlsVisible();
 	}
+
+
+
 
 	public void assertSearchAvailable() {
 		play.waitForVisible(searchField, 8000, "Search input");
@@ -156,7 +160,7 @@ play.click(createSRButton,"Create SR");
 	}
 
 	public void assertSubjectFieldVisible() {
-		play.waitForVisible(subjectField, 8000, "Subject field");
+		play.waitForVisible(subjectField, 5000, "Subject field");
 	}
 
 	public void assertDescriptionFieldVisible() {
@@ -251,22 +255,31 @@ play.click(createSRButton,"Create SR");
 	}
 
 	public void assertRequestNotSubmitted() {
-		SubmissionSnapshot snap = waitForSubmissionSnapshot(15000);
-		String srNumber = extractSrNumberBestEffort(snap);
 
-		// Negative: must NOT have success toast/dialog, must have validation errors, and must NOT have SR number.
-		boolean ok = !snap.hasSuccessSignal && snap.hasValidationErrors && (srNumber == null || srNumber.isBlank());
-		if (!ok) {
+		PlayActions.SubmissionResult result = play.validateSubmission(
+				goToServiceRequestsButton,
+				toastAny,
+				genericErrorMessages,
+				createFormContainer,
+				15000
+		);
+	
+		boolean isNotSubmitted =
+				!result.isSubmitted &&
+				result.hasErrors &&
+				result.isFormVisible;
+	
+		if (!isNotSubmitted) {
 			System.out.println(
-					"SR not-submitted assertion failed. hasSuccessSignal=" + snap.hasSuccessSignal
-							+ ", hasValidationErrors=" + snap.hasValidationErrors
-							+ ", toastText=" + (snap.toastText == null ? "null" : snap.toastText.replaceAll("\\s+", " ").trim())
-							+ ", firstErrorText=" + (snap.firstErrorText == null ? "null" : snap.firstErrorText.replaceAll("\\s+", " ").trim())
-							+ ", extractedSrNumber=" + (srNumber == null ? "null" : srNumber)
-							+ ", createFormVisible=" + snap.createFormVisible
+					"❌ SR NOT SUBMITTED FAILED\n" +
+					"isSubmitted=" + result.isSubmitted +
+					", hasErrors=" + result.hasErrors +
+					", formVisible=" + result.isFormVisible +
+					", toast=" + result.toastMessage
 			);
 		}
-		play.verifyIntValues(ok ? 1 : 0, 1);
+	
+		play.verifyIntValues(isNotSubmitted ? 1 : 0, 1);
 	}
 
 	public void enterSubjectMoreThan255Chars() {
@@ -616,14 +629,14 @@ play.click(createSRButton,"Create SR");
 		// JSON shows simple <select> elements for category/subcategory at top
 		play.waitForVisible(categoryDropdown, 8000, "Category dropdown");
 		try {
-			play.SelectOptions(categoryDropdown, category);
+			play.selectOptionsByValue(categoryDropdown, category);
 		} catch (Exception ignored) {
 			// allow negative scenarios where option might not exist
 		}
 
 		play.waitForVisible(subCategoryDropdown, 8000, "Subcategory dropdown");
 		try {
-			play.SelectOptions(subCategoryDropdown, subcategory);
+			play.selectOptionsByValue(subCategoryDropdown, subcategory);
 		} catch (Exception ignored) {
 			// allow negative scenarios where option might not exist
 		}
@@ -636,7 +649,7 @@ play.click(createSRButton,"Create SR");
 		assertCreateFormVisible();
 		play.waitForVisible(categoryDropdown, 8000, "Category dropdown");
 		try {
-			play.SelectOptions(categoryDropdown, category);
+			play.selectOptionsByValue(categoryDropdown, category);
 		} catch (Exception ignored) {
 		}
 	}
@@ -860,27 +873,29 @@ play.click(createSRButton,"Create SR");
 	}
 
 	public void assertServiceRequestSubmittedSuccessfully() {
-		SubmissionSnapshot snap = waitForSubmissionSnapshot(45000);
 
-		// Positive: must have a success signal AND an SR number.
-		String srNumber = extractSrNumberBestEffort(snap);
-		boolean hasSrNumber = srNumber != null && !srNumber.isBlank();
-
-		boolean ok = snap.hasSuccessSignal && hasSrNumber;
-		if (!ok) {
+		PlayActions.SubmissionResult result = play.validateSubmission(
+				goToServiceRequestsButton,
+				toastAny,
+				genericErrorMessages,
+				createFormContainer,
+				20000
+		);
+	
+		boolean isSubmitted =
+				result.isSubmitted &&
+				!result.hasErrors;
+	
+		if (!isSubmitted) {
 			System.out.println(
-					"SR submit assertion failed. hasSuccessSignal=" + snap.hasSuccessSignal
-							+ ", hasValidationErrors=" + snap.hasValidationErrors
-							+ ", toastText=" + (snap.toastText == null ? "null" : snap.toastText.replaceAll("\\s+", " ").trim())
-							+ ", firstErrorText=" + (snap.firstErrorText == null ? "null" : snap.firstErrorText.replaceAll("\\s+", " ").trim())
-							+ ", extractedSrNumber=" + (srNumber == null ? "null" : srNumber)
-							+ ", createFormVisible=" + snap.createFormVisible
-							+ ", submitVisible=" + snap.submitVisible
+					"❌ SR SUBMISSION FAILED\n" +
+					"isSubmitted=" + result.isSubmitted +
+					", hasErrors=" + result.hasErrors +
+					", toast=" + result.toastMessage
 			);
 		}
-		play.verifyIntValues(ok ? 1 : 0, 1);
-
-		lastCreatedSrNumber = srNumber;
+	
+		play.verifyIntValues(isSubmitted ? 1 : 0, 1);
 	}
 
 	public void goToServiceRequestsFromSuccessDialog() {
@@ -1270,17 +1285,29 @@ play.click(createSRButton,"Create SR");
 	}
 
 	private Locator getResultRowsLocator() {
-		Locator rows = play.getPage().locator(tableRowsCss);
-		if (rows.count() > 0) return rows;
-		Locator roleRows = play.getPage().locator(tableRowRoleCss);
-		return roleRows;
+
+		Locator primary = play.getPage().locator(tableRowsCss);
+	
+		if (primary.count() > 0) {
+			System.out.println("Using primary locator");
+			return primary;
+		}
+	
+		Locator fallback = play.getPage().locator(tableRowRoleCss);
+	
+		if (fallback.count() > 0) {
+			System.out.println("Using fallback locator");
+			return fallback;
+		}
+	
+		throw new RuntimeException("No rows found using any locator");
 	}
 
 	private void selectFilterDropdownBestEffort(String name, String value) {
 		// try select[name=...]
 		String selector = "css=select[name='" + name + "'], select#" + name;
 		if (play.getPage().locator(selector).count() > 0) {
-			play.SelectOptions(selector, value);
+			play.selectOptionsByValue(selector, value);
 			return;
 		}
 		// try label-based relationship
@@ -1292,7 +1319,7 @@ play.click(createSRButton,"Create SR");
 			Locator l = play.getPage().locator(labelBased);
 			String tag = l.first().evaluate("el => el.tagName").toString();
 			if (tag != null && tag.equalsIgnoreCase("SELECT")) {
-				play.SelectOptions(labelBased, value);
+				play.selectOptionsByValue(labelBased, value);
 			} else {
 				l.first().click();
 				play.getPage().locator("text=" + value).first().click();

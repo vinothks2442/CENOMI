@@ -79,8 +79,13 @@ public class CucumberHooks {
 		 */
 
 		if (browserfactory.getBrowserContext() != null) {
-			browserfactory.getBrowserContext().tracing().stop(new Tracing.StopOptions().setPath(Paths.get(
-					System.getProperty("user.dir") + "/TracingReports/" + dateStamp + "/" + scenario.getName() + ".zip")));
+			try {
+				browserfactory.getBrowserContext().tracing().stop(new Tracing.StopOptions().setPath(Paths.get(
+						System.getProperty("user.dir") + "/TracingReports/" + dateStamp + "/" + scenario.getName() + ".zip")));
+			} catch (Exception e) {
+				// tracing might not be started if browser failed to launch
+				System.out.println("Tracing stop skipped: " + e.getMessage());
+			}
 		}
 		if (str_Execution_TYPE.equalsIgnoreCase("Web_UI")) {
 			totalTestCases.add(scenario.getName());
@@ -111,7 +116,10 @@ public class CucumberHooks {
 				}
 			} else {
 				passedTests.add(scenario.getName());
-				if (Boolean.parseBoolean(System.getProperty(SYS_CLOSE_BROWSER_ON_PASS, "true"))) {
+				// In persistent mode, default to keeping the same window across scenarios unless explicitly requested.
+				String sessionMode = System.getProperty("session", "fresh");
+				boolean defaultCloseOnPass = !sessionMode.equalsIgnoreCase("persistent");
+				if (Boolean.parseBoolean(System.getProperty(SYS_CLOSE_BROWSER_ON_PASS, String.valueOf(defaultCloseOnPass)))) {
 					browserfactory.closeBrowser();
 				}
 			}

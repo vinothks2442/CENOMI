@@ -36,6 +36,15 @@ Feature: Service Request (SR) - Excel Coverage (TC_001 to TC_034)
   Scenario: TC_003 Validate mandatory Subject field
     When user clicks create service request button
     And user leaves service request subject empty
+    And user selects service request company "Saudi Telecom Company"
+    And user selects tenant contact "rinosha Rajan - Service Provider"
+    And user selects lease_brand mall "t0103430 - LORA - Nakheel Mall"
+    And user waits "2" seconds for dropdown options to load
+    And user enters service request description "E2E - SR description valid"
+    And user enters service request notes "E2E - SR notes valid"
+    And user uploads service request attachments:
+      | fileName   |
+      | Dummy.pdf  |
     And user submits service request form
     Then subject validation message should be displayed
     And service request should not be submitted
