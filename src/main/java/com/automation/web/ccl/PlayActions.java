@@ -3,7 +3,9 @@ import com.automation.web.common_utils.ConfigReader;
 import com.automation.web.common_utils.EmailOTPReader;
 
 import static org.testng.Assert.assertEquals;
-
+import java.util.Arrays;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -28,13 +30,17 @@ import com.microsoft.playwright.options.WaitForSelectorState;
 import junit.framework.Assert;
 
 public class PlayActions {
-	private  BrowserContext context = BrowserFactory.getInstance().getBrowserContext();
+	private BrowserContext context() {
+		return BrowserFactory.getInstance().getBrowserContext();
+	}
 
-	private Page page = BrowserFactory.getInstance().getPage();
+	private Page page() {
+		return BrowserFactory.getInstance().getPage();
+	}
 
 	public void navigate(String URL) {
-		page.navigate(URL);
-		String ActualURL = page.url();
+		page().navigate(URL);
+		String ActualURL = page().url();
 		System.out.println("Actual URL - " + ActualURL);
 		System.out.println("Expected URL - " + URL);
 		ReportManager.logInfo("Actual URL - " + ActualURL);
@@ -43,33 +49,49 @@ public class PlayActions {
 	
 
 	public void click(String locator, String info) {
-		page.click(locator);
+		page().click(locator);
 		System.out.println("Successfully clicked on  -  " + info);
 		ReportManager.logInfo("Successfully clicked on  -  " + info);
 	}
 
 	public String innerHTML(String locator) {
 		try {
-			return page.innerHTML(locator);
+			return page().innerHTML(locator);
 		} catch (Exception e) {
 			throw new RuntimeException("Unable to get innerHTML for locator: " + locator);
 		}
 	}
 
 	public void fill(String locator, String value, String info) {
-		page.fill(locator, value);
+		page().fill(locator, value);
 		System.out.println("Successfully entered value -  " + value + " in " + info + " box");
 		ReportManager.logInfo("Successfully entered value -  " + value + " in " + info + " box");
 	}
 
+	public void enterTextUsingJS(String locator, String value, String info) {
+
+		page().evaluate(
+			"(data) => { " +
+			"const el = document.querySelector(data.locator); " +
+			"if (!el) throw new Error('Element not found'); " +
+			"el.value = data.value; " +
+			"el.dispatchEvent(new Event('input', { bubbles: true })); " +
+			"el.dispatchEvent(new Event('change', { bubbles: true })); " +
+			"}",
+			Map.of("locator", locator, "value", value)
+		);
+	
+		System.out.println("Entered value using JS - " + value + " in " + info);
+	}
+
 	public void type(String locator, String value, String info) {
-		page.type(locator, value);
+		page().type(locator, value);
 		System.out.println("Successfully entered value -  " + value + " in " + info + " box");
 		ReportManager.logInfo("Successfully entered value -  " + value + " in " + info + " box");
 	}
 
 	public void clickInsideFrame(String frameLocator, String elementLocator, String info) {
-		Locator locator = page.frameLocator(frameLocator).locator(elementLocator);
+		Locator locator = page().frameLocator(frameLocator).locator(elementLocator);
 		locator.click();
 		System.out.println("Successfully clicked on  -  " + info);
 		ReportManager.logInfo("Successfully clicked on  -  " + info);
@@ -88,14 +110,14 @@ public class PlayActions {
 	 * @return boolean
 	 */
 	public int allTextContentsSelectDrpdwnCount(String selectorDrpDwn) {
-		Locator selectElement = page.locator(selectorDrpDwn); // Example using ID
+		Locator selectElement = page().locator(selectorDrpDwn); // Example using ID
         int optionCount = selectElement.locator("option").count();
         System.out.println("Number of options: " + optionCount);
         return optionCount;
 	}
 	
 	public List allTextContentsSelectDrpdwn(String selectorDrpDwn) {
-		Locator selectElement = page.locator(selectorDrpDwn); // Example using I
+		Locator selectElement = page().locator(selectorDrpDwn); // Example using I
         // Get the labels of each option
         List<String> optionLabels = selectElement.locator("option").allInnerTexts();
         System.out.println("Option labels: " + optionLabels);
@@ -103,7 +125,7 @@ public class PlayActions {
 	}
 
 	public void selectOptionFromDropdown(String locator, String value) {
-		Locator options = page.locator(locator);
+		Locator options = page().locator(locator);
 		int count = options.count();
 	
 		for (int i = 0; i < count; i++) {
@@ -120,13 +142,13 @@ public class PlayActions {
 	}
 
 	public void waitForSelector(String locator, double timeout, String info) {
-		page.waitForSelector(locator, new Page.WaitForSelectorOptions().setTimeout(timeout));
+		page().waitForSelector(locator, new Page.WaitForSelectorOptions().setTimeout(timeout));
 		System.out.println("Successfully waited for selector -  " + info);
 		ReportManager.logInfo("Successfully waited for selector -  " + info);
 	}
 	
 	public boolean isVisibleInsideFrame(String frameLocator, String elementLocator, String info) {
-		Locator locator = page.frameLocator(frameLocator).locator(elementLocator);
+		Locator locator = page().frameLocator(frameLocator).locator(elementLocator);
 		boolean isPresent = locator.isVisible();
 		if (isPresent == true) {
 			System.out.println("Successfully element is displayed  -  " + info);
@@ -140,7 +162,7 @@ public class PlayActions {
 	}
 
 	public String getTextInsideFrame(String frameLocator, String elementLocator, String info) {
-		Locator locator = page.frameLocator(frameLocator).locator(elementLocator);
+		Locator locator = page().frameLocator(frameLocator).locator(elementLocator);
 		String text = locator.textContent();
 		System.out.println("Text is -  " + text);
 		ReportManager.logInfo("Text is -  " + text);
@@ -148,14 +170,14 @@ public class PlayActions {
 	}
 
 	public void fillInsideFrame(String frameLocator, String elementLocator, String value, String info) {
-		Locator locator = page.frameLocator(frameLocator).locator(elementLocator);
+		Locator locator = page().frameLocator(frameLocator).locator(elementLocator);
 		locator.fill(value);
 		System.out.println("Successfully entered value -  " + value + " in " + info + " box");
 		ReportManager.logInfo("Successfully entered value -  " + value + " in " + info + " box");
 	}
 
 	public void typeInsideFrame(String frameLocator, String elementLocator, String value, String info) {
-		Locator locator = page.frameLocator(frameLocator).locator(elementLocator);
+		Locator locator = page().frameLocator(frameLocator).locator(elementLocator);
 		locator.type(value);
 		System.out.println("Successfully entered value -  " + value + " in " + info + " box");
 		ReportManager.logInfo("Successfully entered value -  " + value + " in " + info + " box");
@@ -196,14 +218,14 @@ public class PlayActions {
 	 * @return
 	 */
 	public Frame switchToFrame(String frameLocator, String info) {
-		frame = page.frame(frameLocator);
+		frame = page().frame(frameLocator);
 		ReportManager.logInfo("Successfully switched to frame -  " + info);
 		System.out.println("Successfully switched to frame -  " + info);
 		return frame;
 	}
 
 	public void switchToDefaultPage(String info) {
-		page = frame.page();
+		// No explicit "switch back" is required in Playwright; keep for backward compatibility.
 		ReportManager.logInfo("Successfully switched to default page -  " + info);
 		System.out.println("Successfully switched to default page -  " + info);
 	}
@@ -214,11 +236,11 @@ public class PlayActions {
 		String otpTextbox,
 		String verifyButton) throws Exception {
 
-page.fill(emailTextbox, ConfigReader.getValue("adminEmail"));
-page.click(nextButton);
-page.click(sendCodeButton);
+page().fill(emailTextbox, ConfigReader.getValue("adminEmail"));
+page().click(nextButton);
+page().click(sendCodeButton);
 
-page.waitForSelector(otpTextbox);
+page().waitForSelector(otpTextbox);
 
 String otp = EmailOTPReader.getOTP(
 ConfigReader.getValue("adminEmail"),
@@ -233,34 +255,34 @@ for (int i = 0; i < otp.length(); i++) {
 
 String indexedOtpLocator = "(" + otpTextbox + ")[" + (i + 1) + "]";
 
-page.fill(indexedOtpLocator, String.valueOf(otp.charAt(i)));
+page().fill(indexedOtpLocator, String.valueOf(otp.charAt(i)));
 }
 
-page.click(verifyButton);
+page().click(verifyButton);
 }
 
 	public String textContent(String locator) {
-		String Text = page.textContent(locator);
+		String Text = page().textContent(locator);
 		System.out.println("Text is -  " + Text);
 		ReportManager.logInfo("Text is -  " + Text);
 		return Text;
 	}
 
 	public void draganddrop(String source, String target) {
-		page.dragAndDrop(source, target);
+		page().dragAndDrop(source, target);
 		System.out.println("Successfully dragged from " + source + " to " + target);
 		ReportManager.logInfo("Successfully dragged from " + source + " to " + target);
 	}
 
 	public void check(String locator, String info) {
-		page.check(locator);
+		page().check(locator);
 		System.out.println("Successfully checked -  " + locator + " in " + info + " box");
 		ReportManager.logInfo("Successfully checked -  " + locator + " in " + info + " box");
 
 	}
 
 	public String getContent() {
-		String content = page.content();
+		String content = page().content();
 		System.out.println("The HTML page content is " + content);
 		ReportManager.logInfo("The HTML page content is " + content);
 		return content;
@@ -284,14 +306,15 @@ page.click(verifyButton);
 
 	public String getAttributeValue(String locator, String name) {
 
-		String attributeText = page.getAttribute(locator, name);
+		String attributeText = page().getAttribute(locator, name);
 		ReportManager.logInfo("Successfully get attribute text - " + attributeText);
 		System.out.println("Successfully get attribute text - " + attributeText);
 		return attributeText;
 	}
 	
+	
 	public void isClickable(String Elelocator, String info) {
-		Locator locator = page.locator(Elelocator);
+		Locator locator = page().locator(Elelocator);
 
         // Check if the element is visible and enabled
         boolean isVisible = locator.isVisible();
@@ -308,32 +331,32 @@ page.click(verifyButton);
 	
 	
 	public void doubleClick(String locator, String info) {
-		page.dblclick(locator);
+		page().dblclick(locator);
 		System.out.println("Successfully double clicked on  -  " + info);
 		ReportManager.logInfo("Successfully double clicked on  -  " + info);
 	}
 
 	public void backButton(String locator, String info) {
-		page.goBack();
+		page().goBack();
 		System.out.println("Successfully clicked on Back Button");
 		ReportManager.logInfo("Successfully clicked on Back Button");
 	}
 
 	public void nextPage(String locator, String info) {
-		page.goForward();
+		page().goForward();
 		System.out.println("Successfully clicked on Forward Button");
 		ReportManager.logInfo("Successfully clicked on Forward Button");
 	}
 
 	public void mouseHover(String locator, String info) {
-		page.hover(locator);
+		page().hover(locator);
 		System.out.println("Successfully mouse hoverd on  -  " + info);
 		ReportManager.logInfo("Successfully mouse hoverd on  -  " + info);
 	}
 
 	public boolean isChecked(String locator, String info) {
 
-		boolean isChecked = page.isChecked(locator);
+		boolean isChecked = page().isChecked(locator);
 		if (isChecked == true) {
 			System.out.println("Successfully element is checked  -  " + info);
 			ReportManager.logInfo("Successfully element is checked  -  " + info);
@@ -347,7 +370,7 @@ page.click(verifyButton);
 
 	public boolean isDisabled(String locator, String info) {
 
-		boolean isDisabled = page.isDisabled(locator);
+		boolean isDisabled = page().isDisabled(locator);
 		if (isDisabled == true) {
 			System.out.println("Successfully element is disabled  -  " + info);
 			ReportManager.logInfo("Successfully element is disabled  -  " + info);
@@ -361,7 +384,7 @@ page.click(verifyButton);
 
 	public boolean isEnabled(String locator, String info) {
 
-		boolean isEnabled = page.isEnabled(locator);
+		boolean isEnabled = page().isEnabled(locator);
 		if (isEnabled == true) {
 			System.out.println("Successfully element is enabled  -  " + info);
 			ReportManager.logInfo("Successfully element is enabled  -  " + info);
@@ -374,7 +397,7 @@ page.click(verifyButton);
 	}
 
 	public boolean isVisible(String locator, String info) {
-		boolean isPresent = page.isVisible(locator);
+		boolean isPresent = page().isVisible(locator);
 		if (isPresent == true) {
 			System.out.println("Successfully element is displayed  -  " + info);
 			ReportManager.logInfo("Successfully element is displayed  -  " + info);
@@ -387,20 +410,20 @@ page.click(verifyButton);
 	}
 
 	public String getTitle() {
-		String title = page.title();
+		String title = page().title();
 		System.out.println("The title of the page is : " + title);
 		ReportManager.logInfo("The title of the page is : " + title);
 		return title;
 	}
 
 	public void uncheck(String locator, String info) {
-		page.uncheck(locator);
+		page().uncheck(locator);
 		System.out.println("Successfully element is uncheck  -  " + info);
 		ReportManager.logInfo("Successfully element is uncheck  -  " + info);
 	}
 
 	public boolean isDisplayed(String locator, String info) {
-		boolean isPresent = page.isVisible(locator);
+		boolean isPresent = page().isVisible(locator);
 
 		if (isPresent == true) {
 			ReportManager.logInfo("Successfully element displayed: " + info);
@@ -414,7 +437,7 @@ page.click(verifyButton);
 	}
 
 	public void scrollToElement(String locator, String info) {
-		page.locator(locator).scrollIntoViewIfNeeded();
+		page().locator(locator).scrollIntoViewIfNeeded();
 		ReportManager.logInfo("Successfully scrolled to - " + info);
 		System.out.println("Successfully scrolled to - " + info);
 	}
@@ -423,34 +446,34 @@ page.click(verifyButton);
 		/**
 		 * refer this link -> https://playwright.dev/java/docs/api/class-keyboard
 		 **/
-		Keyboard key = page.keyboard();
+		Keyboard key = page().keyboard();
 		key.press(keys);
 		System.out.println("Successfully clicked on  -  " + keys);
 		ReportManager.logInfo("Successfully clicked on  -  " + keys);
 	}
 
 	public void delayClick(String locator, double setDelayInMilliSec, String info) {
-		page.click(locator, new Page.ClickOptions().setDelay(setDelayInMilliSec));
+		page().click(locator, new Page.ClickOptions().setDelay(setDelayInMilliSec));
 		System.out.println("Successfully clicked on  -  " + info);
 		ReportManager.logInfo("Successfully clicked on  -  " + info);
 	}
 
 	public void waitForUpload(String locator, String path, String info) {
-		page.setInputFiles(locator, Paths.get(path));
+		page().setInputFiles(locator, Paths.get(path));
 		System.out.println("Successfully file uploaded -  " + info);
 		ReportManager.logInfo("Successfully file uploaded  -  " + info);
 	}
 	
 	public String inputValue(String locator){
-		Locator input = page.locator(locator);
+		Locator input = page().locator(locator);
         String inputValue = input.inputValue();
         return inputValue;
 		
 	}
 
 	public void waitForDownload(String locator, String path) {
-		Download download = page.waitForDownload(() -> {
-			page.click(locator);
+		Download download = page().waitForDownload(() -> {
+			page().click(locator);
 		});
 		String fileName = download.suggestedFilename();
 		download.saveAs(Paths.get(path + fileName));
@@ -459,36 +482,41 @@ page.click(verifyButton);
 		ReportManager.logInfo("Successfully file downloaded  -  " + fileName);
 	}
 
-	public void SelectOptions(String locator, String index) {
-		page.selectOption(locator, index);
+	public void SelectOptionsByIndex(String locator, String index) {
+		page().selectOption(locator, index);
 		System.out.println("Successfully selected the value in Dropdown");
 		ReportManager.logInfo("Successfully selected the value in Dropdown");
+	}
 
+	public void selectOptionsByValue(String locator, String value) {
+		page().selectOption(locator, value);
+		System.out.println("Successfully selected value - " + value);
+		ReportManager.logInfo("Successfully selected value - " + value);
 	}
 
 	public void clear(String locator, String text) {
 
-		page.locator(locator).click();
-		page.keyboard().press("Control+A");
-		page.keyboard().down("Delete");
+		page().locator(locator).click();
+		page().keyboard().press("Control+A");
+		page().keyboard().down("Delete");
 		ReportManager.logInfo("Successfully Cleared text - " + text);
 		System.out.println("Successfully Cleared text - " + text);
 
 	}
 
 	public Page getPage() {
-		return page;
+		return page();
 	}
 	
 	public  BrowserContext getContext() {
-		return context;
+		return context();
 	}
 
 	public boolean waitForVisible(String locator, double setTimeoutInMilliSec, String info) {
 		// boolean isPresent = page.isVisible(locator, new
 		// Page.IsVisibleOptions().setTimeout(setTimeoutInMilliSec)); --> this statement
 		// got deprecated so,
-		ElementHandle element = page.waitForSelector(locator, new Page.WaitForSelectorOptions()
+		ElementHandle element = page().waitForSelector(locator, new Page.WaitForSelectorOptions()
 				.setState(WaitForSelectorState.VISIBLE).setTimeout(setTimeoutInMilliSec));
 		boolean isPresent = element.isVisible();
 		if (isPresent == true) {
@@ -502,15 +530,16 @@ page.click(verifyButton);
 		return isPresent;
 	}
 
+
 	public void waitForClick(String locator, double setTimeoutInMilliSec, String info) {
-		page.click(locator, new Page.ClickOptions().setTimeout(setTimeoutInMilliSec));
+		page().click(locator, new Page.ClickOptions().setTimeout(setTimeoutInMilliSec));
 		System.out.println("Successfully clicked on  -  " + info);
 		ReportManager.logInfo("Successfully clicked on  -  " + info);
 	}
 
 	public void waitForOpenURL(String URL, double setTimeoutInMilliSec) {
-		page.navigate(URL, new Page.NavigateOptions().setTimeout(setTimeoutInMilliSec));
-		String ActualURL = page.url();
+		page().navigate(URL, new Page.NavigateOptions().setTimeout(setTimeoutInMilliSec));
+		String ActualURL = page().url();
 		System.out.println("Actual URL - " + ActualURL);
 		System.out.println("Expected URL - " + URL);
 		ReportManager.logInfo("Actual URL - " + ActualURL);
@@ -539,5 +568,108 @@ page.click(verifyButton);
 		ReportManager.logInfo("Successfully retrieved the SampleQuantity  -  " + samplequantity);
 
 	}
+
+	public SubmissionResult validateSubmission(
+        String successBtn,
+        String toastLoc,
+        String errorLoc,
+        String formLoc,
+        int timeoutMs
+) {
+
+    long end = System.currentTimeMillis() + timeoutMs;
+
+    while (System.currentTimeMillis() < end) {
+
+        // ✅ SUCCESS BUTTON
+        boolean hasSuccessBtn = page().locator(successBtn).count() > 0;
+
+        // ✅ TOAST
+        String toastText = null;
+        try {
+            Locator toast = page().locator(toastLoc);
+            if (toast.count() > 0) {
+                toastText = toast.first().textContent();
+            }
+        } catch (Exception ignored) {}
+
+        String toast = toastText == null ? "" : toastText.toLowerCase().replaceAll("\\s+", " ").trim();
+
+        boolean isSuccessToast =
+                toast.contains("success") ||
+                toast.contains("submitted") ||
+                toast.contains("created");
+
+        boolean isErrorToast =
+                toast.contains("error") ||
+                toast.contains("failed") ||
+                toast.contains("invalid") ||
+                toast.contains("check the form");
+
+        // ✅ ERRORS
+        boolean hasFieldErrors = page().locator(errorLoc).count() > 0;
+
+        boolean hasErrors = hasFieldErrors || isErrorToast;
+
+        // ✅ FORM
+        boolean isFormVisible = false;
+        try {
+            Locator form = page().locator(formLoc);
+            isFormVisible = form.count() > 0 && form.first().isVisible();
+        } catch (Exception ignored) {}
+
+        // ✅ FINAL
+        boolean isSubmitted = hasSuccessBtn || isSuccessToast;
+
+        if (isSubmitted || hasErrors) {
+            return new SubmissionResult(isSubmitted, hasErrors, isFormVisible, toastText);
+        }
+
+        page().waitForTimeout(300);
+    }
+
+    return new SubmissionResult(false, false, true, null);
+}
+
+public class SubmissionResult {
+    public boolean isSubmitted;
+    public boolean hasErrors;
+    public boolean isFormVisible;
+    public String toastMessage;
+
+    public SubmissionResult(boolean isSubmitted, boolean hasErrors, boolean isFormVisible, String toastMessage) {
+        this.isSubmitted = isSubmitted;
+        this.hasErrors = hasErrors;
+        this.isFormVisible = isFormVisible;
+        this.toastMessage = toastMessage;
+    }
+}
+
+public void verifyMultipleText(String locator, String expectedTextFromConfig, String elementName) {
+
+    // Step 1: Convert config string → List
+    List<String> expectedTexts = Arrays.stream(expectedTextFromConfig.split(","))
+            .map(String::trim)
+            .collect(Collectors.toList());
+
+    // Step 2: Get UI texts
+    List<String> actualTexts = page().locator(locator).allTextContents()
+            .stream()
+            .map(String::trim)
+            .collect(Collectors.toList());
+
+    // Step 3: Validation
+    for (String expected : expectedTexts) {
+
+        boolean found = actualTexts.stream()
+                .anyMatch(actual -> actual.equalsIgnoreCase(expected));
+
+        if (!found) {
+            throw new AssertionError( elementName + ": " + expected);
+        } else {
+            System.out.println(elementName + ": " + expected);
+        }
+    }
+}
 
 }

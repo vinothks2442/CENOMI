@@ -55,8 +55,6 @@ public class BrowserFactory {
 
     public void setBrowser(String browser) {
 
-        tlPlaywright.set(Playwright.create());
-
         String sessionMode = System.getProperty("session", "fresh");
         System.out.println("Session Mode : " + sessionMode);
         ReportManager.logInfo("Session Mode : " + sessionMode);
@@ -66,6 +64,29 @@ public class BrowserFactory {
             System.out.println("Clearing saved browser session (clearSession=true)");
             ReportManager.logInfo("Clearing saved browser session (clearSession=true)");
         }
+
+        // In persistent mode, re-use the already launched context to avoid:
+        // - opening a new browser window per scenario
+        // - conflicts on the same user-data-dir ("Opening in existing browser session")
+        if (sessionMode.equalsIgnoreCase("persistent") && !clearSession) {
+            BrowserContext existingCtx = tlBrowserContext.get();
+            if (existingCtx != null) {
+                List<Page> pages = existingCtx.pages();
+                if (pages != null && !pages.isEmpty()) {
+                    // keep only one tab to avoid confusion
+                    for (int i = 1; i < pages.size(); i++) {
+                        try { pages.get(i).close(); } catch (Exception ignored) {}
+                    }
+                    tlPage.set(pages.get(0));
+                    return;
+                }
+            }
+        }
+
+        // Fresh mode (and persistent clear) should start clean to avoid stale/closed objects
+        closeBrowser();
+
+        tlPlaywright.set(Playwright.create());
 
         String dimensions = System.getProperty("Dimension", "default");
         int[] pixels = setDimensions(dimensions);
@@ -142,8 +163,28 @@ public class BrowserFactory {
 
         // When using a persistent context, Playwright may already open a default page.
         // To avoid having two tabs, reuse the existing page if present; otherwise create a new one.
+        // Also track new tabs/popups and always treat the latest as "active page".
+        getBrowserContext().onPage(p -> {
+            try {
+                // close any extra tabs to keep a single-window experience
+                List<Page> pages = getBrowserContext().pages();
+                if (pages != null) {
+                    for (Page other : pages) {
+                        if (other != null && other != p) {
+                            try { other.close(); } catch (Exception ignored) {}
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+            tlPage.set(p);
+        });
+
         List<Page> existingPages = getBrowserContext().pages();
         if (existingPages != null && !existingPages.isEmpty()) {
+            for (int i = 1; i < existingPages.size(); i++) {
+                try { existingPages.get(i).close(); } catch (Exception ignored) {}
+            }
             tlPage.set(existingPages.get(0));
         } else {
             tlPage.set(getBrowserContext().newPage());
