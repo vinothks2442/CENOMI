@@ -3,19 +3,11 @@ package com.automation.web.common_utils;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.nio.file.*;
+import java.util.*;
 
 import com.automation.web.Report_Utils.ReportManager;
-import com.microsoft.playwright.Browser;
-import com.microsoft.playwright.BrowserContext;
-import com.microsoft.playwright.BrowserType;
-import com.microsoft.playwright.Page;
-import com.microsoft.playwright.Playwright;
+import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.Geolocation;
 
 public class BrowserFactory {
@@ -25,12 +17,18 @@ public class BrowserFactory {
     static ThreadLocal<BrowserContext> tlBrowserContext = new ThreadLocal<>();
     static ThreadLocal<Page> tlPage = new ThreadLocal<>();
 
+    // 🔥 Multi-role support
+    static ThreadLocal<Map<String, BrowserContext>> tlRoleContexts =
+            ThreadLocal.withInitial(HashMap::new);
+
+    static ThreadLocal<Map<String, Page>> tlRolePages =
+            ThreadLocal.withInitial(HashMap::new);
+
     public static BrowserFactory instance = null;
 
     private BrowserFactory() {}
 
     public static BrowserFactory getInstance() {
-
         if (instance == null) {
             instance = new BrowserFactory();
         }
@@ -53,6 +51,13 @@ public class BrowserFactory {
         return tlPage.get();
     }
 
+    public Page getPage(String role) {
+        return tlRolePages.get().get(role);
+    }
+
+    // ==========================
+    // 🔥 Browser Setup (FIXED)
+    // ==========================
     public void setBrowser(String browser) {
 
         String sessionMode = System.getProperty("session", "fresh");
@@ -60,30 +65,12 @@ public class BrowserFactory {
         ReportManager.logInfo("Session Mode : " + sessionMode);
 
         boolean clearSession = Boolean.parseBoolean(System.getProperty("clearSession", "false"));
+
         if (clearSession) {
             System.out.println("Clearing saved browser session (clearSession=true)");
             ReportManager.logInfo("Clearing saved browser session (clearSession=true)");
         }
 
-        // In persistent mode, re-use the already launched context to avoid:
-        // - opening a new browser window per scenario
-        // - conflicts on the same user-data-dir ("Opening in existing browser session")
-        if (sessionMode.equalsIgnoreCase("persistent") && !clearSession) {
-            BrowserContext existingCtx = tlBrowserContext.get();
-            if (existingCtx != null) {
-                List<Page> pages = existingCtx.pages();
-                if (pages != null && !pages.isEmpty()) {
-                    // keep only one tab to avoid confusion
-                    for (int i = 1; i < pages.size(); i++) {
-                        try { pages.get(i).close(); } catch (Exception ignored) {}
-                    }
-                    tlPage.set(pages.get(0));
-                    return;
-                }
-            }
-        }
-
-        // Fresh mode (and persistent clear) should start clean to avoid stale/closed objects
         closeBrowser();
 
         tlPlaywright.set(Playwright.create());
@@ -91,7 +78,8 @@ public class BrowserFactory {
         String dimensions = System.getProperty("Dimension", "default");
         int[] pixels = setDimensions(dimensions);
 
-        BrowserType.LaunchOptions launchOptions = new BrowserType.LaunchOptions().setHeadless(false);
+        BrowserType.LaunchOptions launchOptions =
+                new BrowserType.LaunchOptions().setHeadless(false);
 
         switch (browser.toLowerCase()) {
 
@@ -101,12 +89,16 @@ public class BrowserFactory {
 
             case "chrome":
                 tlBrowser.set(getPlaywright().chromium().launch(
-                        new BrowserType.LaunchOptions().setChannel("chrome").setHeadless(false)));
+                        new BrowserType.LaunchOptions()
+                                .setChannel("chrome")
+                                .setHeadless(false)));
                 break;
 
             case "edge":
                 tlBrowser.set(getPlaywright().chromium().launch(
-                        new BrowserType.LaunchOptions().setChannel("msedge").setHeadless(false)));
+                        new BrowserType.LaunchOptions()
+                                .setChannel("msedge")
+                                .setHeadless(false)));
                 break;
 
             case "firefox":
@@ -118,168 +110,162 @@ public class BrowserFactory {
                 break;
 
             default:
-                System.out.println("Please pass the correct browser name...");
-                break;
+                throw new RuntimeException("Invalid browser: " + browser);
         }
 
-        // -------- Persistent Session --------
-        if (sessionMode.equalsIgnoreCase("persistent")) {
+        // ✅ IMPORTANT FIX:
+        // Do NOT create default context/page here
+        // Role session will handle context + page creation
 
-            Path userDataDir = Paths.get(System.getProperty("user.dir"), "browser-session");
-            if (clearSession) {
-                deleteDirectoryQuietly(userDataDir);
+        tlBrowserContext.remove();
+        tlPage.remove();
+    }
+
+    // ==========================
+    // 🔥 Role Session (FIXED)
+    // ==========================
+    public Page initRoleSession(String role) {
+
+        if (tlRolePages.get().containsKey(role)) {
+            return tlRolePages.get().get(role);
+        }
+
+        int[] pixels = setDimensions(System.getProperty("Dimension", "default"));
+        String storagePath = getStoragePath(role);
+
+        Path fullPath = Paths.get(System.getProperty("user.dir"), storagePath);
+
+        Browser.NewContextOptions options = new Browser.NewContextOptions()
+                .setViewportSize(pixels[0], pixels[1])
+                .setAcceptDownloads(true)
+                .setPermissions(Arrays.asList("geolocation"))
+                .setGeolocation(new Geolocation(13.9591, 79.5808));
+
+        // ✅ Load session only if exists
+        if (Files.exists(fullPath)) {
+            System.out.println("🔁 Loading session: " + fullPath.toAbsolutePath());
+            options.setStorageStatePath(fullPath);
+        } else {
+            System.out.println("🆕 No session found. Fresh login required for role: " + role);
+        }
+
+        BrowserContext context = getBrowser().newContext(options);
+        Page page = context.newPage();
+
+        tlRoleContexts.get().put(role, context);
+        tlRolePages.get().put(role, page);
+
+        // ✅ Set main thread page also (important for legacy code)
+        tlPage.set(page);
+
+        return page;
+    }
+
+    // ==========================
+    // 🔥 Save Session
+    // ==========================
+    public void saveSession(String role) {
+
+        try {
+            Page page = getPage(role);
+
+            if (page == null || page.context() == null) {
+                System.out.println("❌ Page/context null. Cannot save session.");
+                return;
             }
 
-            System.out.println("Persistent session dir: " + userDataDir.toAbsolutePath());
-            ReportManager.logInfo("Persistent session dir: " + userDataDir.toAbsolutePath());
+            Path fullPath = Paths.get(System.getProperty("user.dir"), getStoragePath(role));
 
-            BrowserType.LaunchPersistentContextOptions options =
-                    new BrowserType.LaunchPersistentContextOptions()
-                            .setHeadless(false)
-                            .setViewportSize(pixels[0], pixels[1])
-                            .setAcceptDownloads(true)
-                            .setPermissions(Arrays.asList("geolocation"))
-                            .setGeolocation(new Geolocation(13.9591, 79.5808));
+            Files.createDirectories(fullPath.getParent());
 
-            tlBrowserContext.set(
-                    getPlaywright().chromium()
-                            .launchPersistentContext(userDataDir, options)
+            System.out.println("💾 Saving session at: " + fullPath.toAbsolutePath());
+
+            page.context().storageState(
+                    new BrowserContext.StorageStateOptions().setPath(fullPath)
             );
 
-        }
+            System.out.println("✅ Session saved successfully for role: " + role);
 
-        // -------- Fresh Session --------
-        else {
-
-            tlBrowserContext.set(getBrowser().newContext(
-                    new Browser.NewContextOptions()
-                            .setViewportSize(pixels[0], pixels[1])
-                            .setAcceptDownloads(true)
-                            .setPermissions(Arrays.asList("geolocation"))
-                            .setGeolocation(new Geolocation(13.9591, 79.5808))
-            ));
-
-        }
-
-        // When using a persistent context, Playwright may already open a default page.
-        // To avoid having two tabs, reuse the existing page if present; otherwise create a new one.
-        // Also track new tabs/popups and always treat the latest as "active page".
-        getBrowserContext().onPage(p -> {
-            try {
-                // close any extra tabs to keep a single-window experience
-                List<Page> pages = getBrowserContext().pages();
-                if (pages != null) {
-                    for (Page other : pages) {
-                        if (other != null && other != p) {
-                            try { other.close(); } catch (Exception ignored) {}
-                        }
-                    }
-                }
-            } catch (Exception ignored) {
-            }
-            tlPage.set(p);
-        });
-
-        List<Page> existingPages = getBrowserContext().pages();
-        if (existingPages != null && !existingPages.isEmpty()) {
-            for (int i = 1; i < existingPages.size(); i++) {
-                try { existingPages.get(i).close(); } catch (Exception ignored) {}
-            }
-            tlPage.set(existingPages.get(0));
-        } else {
-            tlPage.set(getBrowserContext().newPage());
+        } catch (Exception e) {
+            System.out.println("⚠ Session save failed: " + e.getMessage());
         }
     }
 
+    // ==========================
+    // 🔥 Role Path Mapping
+    // ==========================
+    private String getStoragePath(String role) {
+        switch (role.toLowerCase()) {
+            case "admin":
+                return "auth/admin.json";
+            case "mallmanager":
+            case "mall manager":
+                return "auth/mall_manager.json";
+            case "fmmanager":
+            case "fm manager":
+                return "auth/fm_manager.json";
+            case "rddmanager":
+            case "rdd manager":
+                return "auth/rdd_manager.json";
+            default:
+                throw new RuntimeException("Invalid role: " + role);
+        }
+    }
+
+    // ==========================
+    // 🔥 Screen Size
+    // ==========================
     public int[] setDimensions(String dimensions) {
 
         int width;
         int height;
 
-        String dim = dimensions == null ? "" : dimensions.trim();
+        if (dimensions == null || dimensions.equalsIgnoreCase("default")) {
 
-        // Fallback to default when not set, blank, or explicitly "default"
-        if (dim.isEmpty() || dim.equalsIgnoreCase("default")) {
-
-            Dimension screensize = Toolkit.getDefaultToolkit().getScreenSize();
-            width = (int) screensize.getWidth();
-            height = (int) screensize.getHeight();
-
-            System.out.println("Default window size: " + width + " * " + height);
-            ReportManager.logInfo("Default window size: " + width + " * " + height);
+            Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+            width = (int) screen.getWidth();
+            height = (int) screen.getHeight();
 
         } else {
-
-            try {
-                String[] hit = dim.split("\\*");
-                if (hit.length != 2) {
-                    throw new NumberFormatException("Invalid Dimension format: " + dim);
-                }
-                width = Integer.parseInt(hit[0].trim());
-                height = Integer.parseInt(hit[1].trim());
-                System.out.println("Window size detected : " + width + " * " + height);
-                ReportManager.logInfo("Window size detected : " + width + " * " + height);
-            } catch (Exception e) {
-                // On any parsing issue, safely fall back to default screen size
-                Dimension screensize = Toolkit.getDefaultToolkit().getScreenSize();
-                width = (int) screensize.getWidth();
-                height = (int) screensize.getHeight();
-                System.out.println("Invalid Dimension value '" + dim + "', using default: " + width + " * " + height);
-                ReportManager.logInfo("Invalid Dimension value '" + dim + "', using default: " + width + " * " + height);
-            }
+            String[] parts = dimensions.split("\\*");
+            width = Integer.parseInt(parts[0]);
+            height = Integer.parseInt(parts[1]);
         }
 
         return new int[]{width, height};
     }
 
+    // ==========================
+    // 🔥 Close Browser
+    // ==========================
     public void closeBrowser() {
         try {
+
+            if (tlRoleContexts.get() != null) {
+                tlRoleContexts.get().values().forEach(ctx -> {
+                    try { ctx.close(); } catch (Exception ignored) {}
+                });
+            }
+
             if (tlBrowserContext.get() != null) {
-                try {
-                    tlBrowserContext.get().close();
-                } catch (Exception ignored) {
-                }
+                tlBrowserContext.get().close();
             }
 
             if (tlBrowser.get() != null) {
-                try {
-                    tlBrowser.get().close();
-                } catch (Exception ignored) {
-                }
+                tlBrowser.get().close();
             }
 
             if (tlPlaywright.get() != null) {
-                try {
-                    tlPlaywright.get().close();
-                } catch (Exception ignored) {
-                }
+                tlPlaywright.get().close();
             }
-        } finally {
-            // Ensure we never hold stale/closed instances in ThreadLocals
-            try { tlPage.remove(); } catch (Exception ignored) {}
-            try { tlBrowserContext.remove(); } catch (Exception ignored) {}
-            try { tlBrowser.remove(); } catch (Exception ignored) {}
-            try { tlPlaywright.remove(); } catch (Exception ignored) {}
-        }
-    }
 
-    private void deleteDirectoryQuietly(Path dir) {
-        try {
-            if (dir == null || !Files.exists(dir)) {
-                return;
-            }
-            // Delete children first, then the directory itself.
-            Files.walk(dir)
-                    .sorted(Comparator.reverseOrder())
-                    .forEach(path -> {
-                        try {
-                            Files.deleteIfExists(path);
-                        } catch (IOException ignored) {
-                            // best-effort cleanup
-                        }
-                    });
-        } catch (Exception ignored) {
-            // best-effort cleanup
-        }
+        } catch (Exception ignored) {}
+
+        tlRoleContexts.remove();
+        tlRolePages.remove();
+        tlPage.remove();
+        tlBrowserContext.remove();
+        tlBrowser.remove();
+        tlPlaywright.remove();
     }
 }

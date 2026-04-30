@@ -33,7 +33,7 @@ public class CenomiSignInScreen {
 		play.fill(emailInput, ConfigReader.getValue("adminEmail"), "Admin email");
 		play.click(nextButton, "Next button");
 		play.click(sendCodeButton, "Send code button");
-		Thread.sleep(150000);
+		Thread.sleep(20000);
 	}
 
 	public void verifyDashboardPage() throws InterruptedException {

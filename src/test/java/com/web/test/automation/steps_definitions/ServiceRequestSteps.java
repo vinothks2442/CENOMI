@@ -1,5 +1,4 @@
 package com.web.test.automation.steps_definitions;
-
 import com.web.test.automation.screens.ServiceRequestScreen;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.*;
@@ -84,12 +83,12 @@ public class ServiceRequestSteps {
 	}
 
 	@When("user submits service request form")
-	public void submitCreateForm() {
+	public void submitCreateForm() throws InterruptedException {
 		serviceRequest.submitRequestForm();
 	}
 
 	@When("user submits service request form with extended wait time")
-	public void submitCreateFormExtendedWait() {
+	public void submitCreateFormExtendedWait() throws InterruptedException {
 		serviceRequest.submitRequestFormWithExtendedWait();
 	}
 
@@ -334,6 +333,11 @@ public class ServiceRequestSteps {
 		serviceRequest.enterComment(comment);
 	}
 
+	@When("user enters service request comment {string} for fitout handover") 
+	public void enterCommentForFH(String comment) {
+		serviceRequest.enterCommentForFH(comment);
+	}
+
 	@When("user submits service request comment")
 	public void submitComment() {
 		serviceRequest.submitComment();
@@ -374,6 +378,26 @@ public class ServiceRequestSteps {
 		serviceRequest.selectMall(mall);
 	}
 
+	@When("user clicks initiate audit request button")
+	public void clickInitiateAuditRequestButton() {
+		serviceRequest.clickInitiateAuditRequestButton();
+	}
+
+	@When("User selects enter brand name as {string}")
+	public void user_selects_enter_brand_name_as(String brandName) throws InterruptedException {
+		serviceRequest.selectBrand(brandName);
+	}
+
+	@When("user enters fitout period in days as {string}")
+	public void user_enters_fitout_period_in_days_as(String fitoutPeriod) {
+    serviceRequest.enterFitoutPeriod(fitoutPeriod);
+	}
+
+	@When("user selects LOD status as {string}")
+	public void user_selects_LOD_status_as(String lodStatus) {
+    serviceRequest.selectLODStatus(lodStatus);
+	}
+
 	@When("user selects service request company {string}")
 	public void selectCompany(String company) throws InterruptedException {
 		serviceRequest.selectCompany(company);
@@ -388,6 +412,21 @@ public class ServiceRequestSteps {
 	public void selectLeaseBrandMall(String mall) throws InterruptedException {
 		serviceRequest.selectLeaseBrandMall1(mall);
 	}
+
+	@When("user selects lease_brand mall {string} for fitout handover")
+	public void selectLeaseBrandMallForFH(String mall) throws InterruptedException {
+		serviceRequest.selectLeaseBrandMall1ForFH(mall);
+	}
+
+	@When("user enters Location as {string} for fitout handover")
+	public void enterLocationForFH(String location) {
+		serviceRequest.enterLocationForFH(location);
+	}
+
+	@When("User enters complaint summary as {string}")
+public void user_enters_complaint_summary_as(String summary) {
+    serviceRequest.enterComplaintSummary(summary);
+}
 
 	@When("user waits {string} seconds for dropdown options to load")
 	public void waitForDropdownOptions(String seconds) {
@@ -475,5 +514,236 @@ public class ServiceRequestSteps {
 	public void uploadedAttachmentShouldNotContain(String fileName) {
 		serviceRequest.assertUploadedAttachmentNotContains(fileName);
 	}
+
+	@When("user enters service request title {string}")
+	public void enterServiceRequestTitle(String title) {
+    serviceRequest.enterServiceRequestTitle(title);
+}
+
+@When("user selects unit code {string}")
+public void selectUnitCode(String unitCode) {
+    serviceRequest.selectUnitCode(unitCode);
+}
+
+@When("user selects unit type {string}")
+public void selectUnitType(String unitType) {
+    serviceRequest.selectUnitType(unitType);
+	
+}
+
+@When("user contractor name {string}")
+public void enterContractorName(String name) {
+    serviceRequest.enterContractorName(name);
+}
+
+@When("user enters contractor mobile number {string}")
+public void enterContractorMobiles(String mobile) {
+    serviceRequest.enterContractorMobileNumber(mobile);
+}
+
+@When("user enters type of work as {string}")
+public void enterTypeOfWork(String workType) {
+    serviceRequest.enterTypeOfWork(workType);
+}
+
+@When("user enters Location as {string}")
+public void enterLocation(String location) {
+    serviceRequest.enterLocation(location);
+}
+
+@When("user clicks performer section collapse dropdown")
+public void clickPerformerSection() {
+    serviceRequest.openPerformerSection();
+}
+
+@When("user enters performer name as {string}")
+public void enterPerformerName(String name) {
+    serviceRequest.enterPerformerName(name);
+}
+
+@When("user enters performer designation as {string}")
+public void enterPerformerDesignation(String designation) {
+    serviceRequest.enterPerformerDesignation(designation);
+}
+
+@When("user enters performer personal qualification as {string}")
+public void enterQualification(String qualification) {
+    serviceRequest.enterPerformerQualification(qualification);
+}
+
+@When("user enters mobile number as {string}")
+public void enterPerformerMobile(String mobile) {
+    serviceRequest.enterPerformerMobile(mobile);
+}
+
+@When("user enters iqama number as {string}")
+public void enterIqama(String iqama) {
+    serviceRequest.enterIqamaNumber(iqama);
+}
+
+@When("user enters instructors full name as {string}")
+public void enterInstructorName(String name) {
+    serviceRequest.enterInstructorName(name);
+}
+
+@When("user enters planned date and time collapse dropdown")
+public void openPlannedDateSection() {
+    serviceRequest.openPlannedDateSection();
+}
+
+@When("user picks from date {string} and To date {string}")
+public void selectDates(String start, String end) throws InterruptedException {
+    serviceRequest.selectFromToDate(start, end);
+}
+
+@When("user picks from date {string} and end date {string}")
+public void selectStartAndEndDate(String start, String end) throws InterruptedException {
+    serviceRequest.selectStartEndDate(start, end);
+}
+
+@When("user picks first period from time {string} and to time {string}")
+public void selectFirstPeriod(String from, String to) {
+    serviceRequest.selectFirstPeriod(from, to);
+}
+
+@When("user picks second period from time {string} and to time {string}")
+public void selectSecondPeriod(String from, String to) {
+    serviceRequest.selectSecondPeriod(from, to);
+}
+
+@When("user selects {string} for {string}")
+    public void user_selects_option(String value, String question) {
+        serviceRequest.selectMeasureOption(question, value);
+}
+
+@When("user click measures of safety collapse dropdown")
+public void openSafetySection() {
+    serviceRequest.openSafetySection();
+}
+
+@When("user selects all measures of safety")
+public void selectAllSafetyMeasures() {
+    serviceRequest.selectAllSafetyMeasures();
+}
+
+@When("user enters Demanded appendices as {string}")
+public void enterAppendices(String value) {
+    serviceRequest.enterAppendices(value);
+}
+
+@When("user enters Special Conditions as {string}")
+public void enterSpecialConditions(String value) {
+    serviceRequest.enterSpecialConditions(value);
+}
+
+@When("user submits work permit service request form")
+public void submitWorkPermitForm() throws InterruptedException {
+    serviceRequest.submitRequestForm();
+}
+
+@When("user enters event details as {string}")
+public void user_enters_event_details(String event) {
+    serviceRequest.enterEventDetails(event);
+}
+
+@When("user selects Violation Issuance Date as {string}")
+public void user_selects_violation_issuance_date(String date) {
+    serviceRequest.selectViolationIssuanceDate(date);
+}
+
+@When("user selects audit report Date as {string}")
+public void user_selects_audit_report_date(String date) {
+    serviceRequest.selectAuditReportDate(date);
+}
+
+@When("user enters location of occurance as {string}")
+public void user_enters_location_of_occurance(String location) {
+    serviceRequest.enterLocationOfOccurance(location);
+}
+
+@When("user selects date of occurance as {string}")
+public void user_selects_date_of_occurance(String date) {
+    serviceRequest.selectDateOfOccurrence(date);
+}
+
+@When("user selects time of occurance as {string}")
+public void user_selects_time_of_occurance(String time) {
+    serviceRequest.selectTimeOfOccurrence(time);
+}
+
+@When("user selects incident type as {string}")
+public void user_selects_incident_type(String type) {
+    serviceRequest.selectIncidentType(type);
+}
+
+@When("user enters unit number as {string}")
+public void user_enters_unit_number(String unit) {
+    serviceRequest.enterUnitNumber(unit);
+}
+
+@When("user enters inspector name as {string}")
+public void user_enters_inspector_name(String name) {
+    serviceRequest.enterInspectorName(name);
+}
+
+@When("user selects Date of First Notification as {string}")
+public void user_selects_first_notification_date(String date) {
+    serviceRequest.selectFirstNotificationDate(date);
+}
+
+@When("user selcts violation category as {string}")
+public void user_selects_violation_category(String category) {
+    serviceRequest.selectViolationCategory(category);
+}
+
+@When("user selects notice level as {string}")
+public void user_selects_notice_level(String level) {
+    serviceRequest.selectNoticeLevel(level);
+}
+
+@When("user selects violation scope as {string}")
+public void user_selects_violation_scope(String scope) {
+    serviceRequest.selectViolationScope(scope);
+}
+
+@When("user selects notice number as {string}")
+public void user_selects_notice_number(String number) {
+    serviceRequest.selectNoticeNumber(number);
+}
+
+@When("user enters violation description as {string}")
+public void user_enters_violation_description(String desc) {
+    serviceRequest.enterViolationDescription(desc);
+}
+
+@When("user enters who exposed to hazards as {string}")
+public void user_enters_exposed_to_hazards(String value) {
+    serviceRequest.enterExposedToHazards(value);
+}
+
+@When("user enters possible consequences as {string}")
+public void user_enters_possible_consequences(String value) {
+    serviceRequest.enterPossibleConsequences(value);
+}
+
+@When("user enters root cause as {string}")
+public void user_enters_root_cause(String value) {
+    serviceRequest.enterRootCause(value);
+}
+
+@When("user enters required actions as {string}")
+public void user_enters_required_actions(String value) {
+    serviceRequest.enterRequiredActions(value);
+}
+
+@When("user enters comments as {string}")
+public void user_enters_comments(String value) {
+    serviceRequest.enterComments(value);
+}
+
+@When("user clicks save button")
+public void clickSaveButton() {
+    serviceRequest.clickSaveButton();
+}
 
 }
