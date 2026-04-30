@@ -3,13 +3,12 @@ import com.automation.web.common_utils.ConfigReader;
 import com.automation.web.common_utils.EmailOTPReader;
 
 import static org.testng.Assert.assertEquals;
-import java.util.Arrays;
+
 import java.util.*;
 import java.util.stream.Collectors;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.List;
 
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -37,6 +36,35 @@ public class PlayActions {
 	private Page page() {
 		return BrowserFactory.getInstance().getPage();
 	}
+
+// 	  // 🔥 NEW: Role support
+//     private static ThreadLocal<String> currentRole = new ThreadLocal<>();
+
+//     public void setRole(String role) {
+//         currentRole.set(role);
+//     }
+
+//     private Page page() {
+//         if (currentRole.get() != null) {
+//             Page rolePage = BrowserFactory.getInstance().getPage(currentRole.get());
+//             if (rolePage != null) {
+//                 return rolePage;
+//             }
+//         }
+//         return BrowserFactory.getInstance().getPage();
+//     }
+
+// 	public void runAs(String role, Runnable actions) {
+//     if (BrowserFactory.getInstance().getPage(role) == null) {
+//         throw new RuntimeException("Role not initialized: " + role);
+//     }
+//     setRole(role);
+//     actions.run();
+// }
+
+    // private BrowserContext context() {
+    //     return page().context();
+    // }
 
 	public void navigate(String URL) {
 		page().navigate(URL);
@@ -606,12 +634,8 @@ page().click(verifyButton);
                 toast.contains("invalid") ||
                 toast.contains("check the form");
 
-        // ✅ ERRORS
         boolean hasFieldErrors = page().locator(errorLoc).count() > 0;
-
         boolean hasErrors = hasFieldErrors || isErrorToast;
-
-        // ✅ FORM
         boolean isFormVisible = false;
         try {
             Locator form = page().locator(formLoc);
@@ -672,4 +696,275 @@ public void verifyMultipleText(String locator, String expectedTextFromConfig, St
     }
 }
 
+public void selectDate(String inputLocator,
+                       String monthYearLocator,
+                       String nextButtonLocator,
+                       String prevButtonLocator,
+                       String dayLocatorTemplate,
+                       String dateValue,
+                       String info) {
+
+    try {
+        // Split date (dd/MM/yyyy)
+        String[] parts = dateValue.split("/");
+        int targetDay = Integer.parseInt(parts[0]);
+        int targetMonth = Integer.parseInt(parts[1]);
+        int targetYear = Integer.parseInt(parts[2]);
+
+        // Month mapping
+        String[] months = {"January","February","March","April","May","June",
+                           "July","August","September","October","November","December"};
+
+        // Open calendar
+        page().click(inputLocator);
+
+        int attempts = 0;
+
+        while (attempts < 36) {
+
+            String currentMonthYear = page().locator(monthYearLocator).textContent().trim();
+            // Example: "April 2026" or "April\n2026"
+            currentMonthYear = currentMonthYear.replaceAll("\\s+", " ");
+
+            String[] currentParts = currentMonthYear.split(",");
+            if (currentParts.length < 2) {
+                throw new IllegalStateException("Unable to parse calendar header: '" + currentMonthYear + "'");
+            }
+
+            String currentMonthName = currentParts[0];
+            int currentYear = Integer.parseInt(currentParts[currentParts.length - 1]);
+
+            // Convert month name → number
+            int currentMonth = 0;
+            for (int i = 0; i < months.length; i++) {
+                if (months[i].equalsIgnoreCase(currentMonthName)) {
+                    currentMonth = i + 1;
+                    break;
+                }
+            }
+
+            // ✅ Check if we reached target
+            if (currentMonth == targetMonth && currentYear == targetYear) {
+                break;
+            }
+
+            // ✅ Decide direction
+            if (currentYear < targetYear || 
+               (currentYear == targetYear && currentMonth < targetMonth)) {
+
+                page().click(nextButtonLocator);   // Move forward
+
+            } else {
+                page().click(prevButtonLocator);   // Move backward
+            }
+
+            attempts++;
+        }
+
+        // ✅ Select Day
+        String finalDayLocator = dayLocatorTemplate.replace("{day}", String.valueOf(targetDay));
+        page().click(finalDayLocator);
+
+        System.out.println("Successfully selected date - " + dateValue + " in " + info);
+        ReportManager.logInfo("Successfully selected date - " + dateValue + " in " + info);
+
+    } catch (Exception e) {
+        System.out.println("Failed to select date - " + dateValue + " in " + info);
+        ReportManager.logInfo("Failed to select date - " + dateValue + " in " + info);
+        throw e;
+    }
+}
+
+public void selectTime(String inputLocator,
+                       String hourValueLocator,
+                       String minuteValueLocator,
+                       String meridianValueLocator,
+                       String hourUpLocator,
+                       String hourDownLocator,
+                       String minuteUpLocator,
+                       String minuteDownLocator,
+                       String meridianToggleLocator,
+                       String timeValue,
+                       String info) {
+
+	try {
+		// Validate input
+		if (timeValue == null || timeValue.trim().isEmpty()) {
+			throw new IllegalArgumentException("Time value is empty for " + info);
+		}
+		// Split time (hh:mm AM/PM)
+		String[] parts = timeValue.trim().split(" ");
+		if (parts.length != 2) {
+			throw new IllegalArgumentException("Time value format invalid for '" + timeValue + "' in " + info + ". Expected format: hh:mm AM/PM");
+		}
+		String[] hm = parts[0].split(":");
+		if (hm.length != 2) {
+			throw new IllegalArgumentException("Time value hour:minute part invalid for '" + timeValue + "' in " + info + ". Expected format: hh:mm");
+		}
+
+		int targetHour = Integer.parseInt(hm[0]);
+		int targetMinute = Integer.parseInt(hm[1]);
+		String targetMeridian = parts[1];
+
+		// Open time picker
+		page().click(inputLocator);
+		
+		// Wait for time picker to load
+		page().waitForTimeout(500);
+
+        // --- Adjust Hour ---
+        int hourAttempts = 0;
+        while (hourAttempts < 24) {
+        	page().waitForTimeout(100);
+            
+        	int currentHour = -1;
+            String hourText = "";
+            
+            try {
+                Locator hourLocator = page().locator(hourValueLocator);
+                int elementCount = hourLocator.count();
+                
+                if (elementCount == 0) {
+                    System.out.println("WARNING: Hour value locator found 0 elements for '" + hourValueLocator + "', checking alternative locators...");
+                    // Try alternative: look for any visible hour-like elements
+                    hourLocator = page().locator("//div[contains(@class, 'rmdp-input')]//input[1]");
+                    if (hourLocator.count() == 0) {
+                        hourLocator = page().locator("//input[@type='text'][1]");
+                    }
+                }
+                
+                hourText = hourLocator.first().textContent().trim();
+                if (hourText.isEmpty()) {
+                    hourText = hourLocator.first().inputValue().trim();
+                }
+                
+                if (hourText.isEmpty()) {
+                    throw new IllegalStateException("Hour value could not be read - locator: '" + hourValueLocator + "'");
+                }
+                
+                currentHour = Integer.parseInt(hourText);
+            } catch (NumberFormatException e) {
+                throw new IllegalStateException("Hour value is not numeric: '" + hourText + "' for " + info, e);
+            } catch (Exception e) {
+                throw new IllegalStateException("Error reading hour value for " + info + ": " + e.getMessage(), e);
+            }
+
+            if (currentHour == targetHour) break;
+
+            if (currentHour < targetHour) {
+                page().click(hourUpLocator);
+            } else {
+                page().click(hourDownLocator);
+            }
+
+            hourAttempts++;
+        }
+
+        if (hourAttempts == 24) {
+            throw new RuntimeException("Hour selection failed for " + info);
+        }
+
+        // --- Adjust Minute ---
+        int minuteAttempts = 0;
+        while (minuteAttempts < 60) {
+        	page().waitForTimeout(100);
+            
+        	int currentMinute = -1;
+            String minuteText = "";
+            
+            try {
+                Locator minuteLocator = page().locator(minuteValueLocator);
+                int elementCount = minuteLocator.count();
+                
+                if (elementCount == 0) {
+                    System.out.println("WARNING: Minute value locator found 0 elements for '" + minuteValueLocator + "', checking alternative locators...");
+                    // Try alternative: look for any visible minute-like elements
+                    minuteLocator = page().locator("//div[contains(@class, 'rmdp-input')]//input[2]");
+                    if (minuteLocator.count() == 0) {
+                        minuteLocator = page().locator("//input[@type='text'][2]");
+                    }
+                }
+                
+                minuteText = minuteLocator.first().textContent().trim();
+                if (minuteText.isEmpty()) {
+                    minuteText = minuteLocator.first().inputValue().trim();
+                }
+                
+                if (minuteText.isEmpty()) {
+                    throw new IllegalStateException("Minute value could not be read - locator: '" + minuteValueLocator + "'");
+                }
+                
+                currentMinute = Integer.parseInt(minuteText);
+            } catch (NumberFormatException e) {
+                throw new IllegalStateException("Minute value is not numeric: '" + minuteText + "' for " + info, e);
+            } catch (Exception e) {
+                throw new IllegalStateException("Error reading minute value for " + info + ": " + e.getMessage(), e);
+            }
+
+            if (currentMinute == targetMinute) break;
+
+            if (currentMinute < targetMinute) {
+                page().click(minuteUpLocator);
+            } else {
+                page().click(minuteDownLocator);
+            }
+
+            minuteAttempts++;
+        }
+
+        if (minuteAttempts == 60) {
+            throw new RuntimeException("Minute selection failed for " + info);
+        }
+
+        // --- Adjust AM/PM ---
+        String currentMeridian = page().locator(meridianValueLocator).textContent().trim();
+
+        if (!currentMeridian.equalsIgnoreCase(targetMeridian)) {
+            page().click(meridianToggleLocator);
+        }
+
+        System.out.println("Successfully selected time - " + timeValue + " in " + info);
+        ReportManager.logInfo("Successfully selected time - " + timeValue + " in " + info);
+
+    } catch (Exception e) {
+        System.out.println("Failed to select time - " + timeValue + " in " + info);
+        ReportManager.logInfo("Failed to select time - " + timeValue + " in " + info);
+        throw e;
+    }
+}
+
+
+public void selectYesNoOption(String questionLabel, String value, String info) {
+
+    try {
+        // Normalize input
+        String input = value.trim().toLowerCase();
+
+        if (!input.equals("yes") && !input.equals("no")) {
+            throw new IllegalArgumentException("Invalid value: " + value + " | Only Yes/No allowed");
+        }
+
+        // Dynamic locator based on label text
+        String baseLocator = "//label[normalize-space()='" + questionLabel + "']/following::input[@type='radio']";
+
+        Locator options = page().locator(baseLocator);
+
+        if (options.count() < 2) {
+            throw new RuntimeException("Radio buttons not found for question: " + questionLabel);
+        }
+
+        // Index 0 = Yes, Index 1 = No (assuming UI order)
+        int indexToClick = input.equals("yes") ? 0 : 1;
+
+        options.nth(indexToClick).click();
+
+        System.out.println("Selected '" + value + "' for: " + questionLabel);
+        ReportManager.logInfo("Selected '" + value + "' for: " + questionLabel);
+
+    } catch (Exception e) {
+        System.out.println("Failed to select '" + value + "' for: " + questionLabel);
+        ReportManager.logInfo("Failed to select '" + value + "' for: " + questionLabel);
+        throw e;
+    }
+}
 }

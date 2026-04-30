@@ -240,7 +240,7 @@ Feature: Service Request (SR) - Excel Coverage (TC_001 to TC_034)
   ########################################################################################################
 
   # 1) Positive Scenarios
-  @SR_E2E_Positive @SR_E2E_AllValid
+  @SR_E2E_Positive @SR_E2E_AllValid @Vinoth
   Scenario: Successful SR creation with all valid inputs
     When user clicks create service request button
     And user selects service request category "INQUIRY" and subcategory "GENERAL"
@@ -256,6 +256,217 @@ Feature: Service Request (SR) - Excel Coverage (TC_001 to TC_034)
       | Dummy.pdf  |
     And user submits service request form
     Then service request should be submitted successfully
+
+   @SR_E2E_Positive @CreateWorkPermit @Vinoth
+  Scenario: Successful SR creation with all valid inputs
+    When user clicks create service request button
+    And user selects service request category "Work Permit" and subcategory "Construction - Hot"
+    And user enters service request title "QA-workpermit(construction - hot)"
+    And user enters service request description "E2E - SR description valid"
+    And user selects service request company "Saudi Telecom Company"
+    And user selects tenant contact "rinosha Rajan - Service Provider"
+    And user selects lease_brand mall "t0103430 - LORA - Nakheel Mall"
+    And user selects unit code "FC009B"
+    # And user selects unit type "t0103430 - LORA - Nakheel Mall"
+    And user contractor name "NIKE"
+    And user enters contractor mobile number "8765432345678"
+    And user enters type of work as "Electrical"
+    And user enters Location as "Riyadh - Saudi arabia"
+    And user clicks performer section collapse dropdown
+    And user enters performer name as "Working employee"
+    And user enters performer designation as "QA Test"
+    And user enters performer personal qualification as "Under Graduate"
+    And user enters mobile number as "765432345678"
+    And user enters iqama number as "76543456434"
+     And user uploads service request attachments:
+      | fileName   |
+      | Dummy.pdf  |
+    And user enters instructors full name as "Test"
+    And user enters planned date and time collapse dropdown
+    And user picks from date "29/04/2026" and To date "29/04/2026"
+    And user picks first period from time "12:30 PM" and to time "01:30 PM"
+    And user picks second period from time "02:30 PM" and to time "03:30 PM"
+    And user click measures of safety collapse dropdown
+    And user selects "Yes" for "Sprinkler system is switched on"
+    And user selects "No" for "Fire Extinguishers are available"
+    And user selects "Yes" for "Fire hoses are available"
+    And user selects "Yes" for "Equipment for carrying out fire-dangerous works is in appropriate conditions"
+    And user selects "No" for "Volatile flammable liquid and combustible materials are removed."
+    And user selects "Yes" for "Fireproof coatings and metal screens are installed where it is necessary"
+    And user selects "Yes" for "All holes in the floor and walls are covered"
+    And user selects "No" for "After the termination of works the control over the place of hot works during 3-5 hours is organized"
+    And user enters Demanded appendices as "QA Test"
+    And user enters Special Conditions as "QA Test conditions"
+    # And user uploads service request attachments:
+    #   | fileName   |
+    #   | Dummy.pdf  |
+    And user submits work permit service request form
+    # Then service request should be submitted successfully
+
+  @SR_E2E_Positive @SR_Complaints @Vinoth
+  Scenario: Successful SR creation with all valid inputs
+    When user clicks create service request button
+    And user selects service request category "Complaints" and subcategory "Mall"
+    And user waits "2" seconds for dropdown options to load
+    And user enters service request title "QA-workpermit(construction - hot)"
+    And user selects service request company "Saudi Telecom Company"
+    And user selects tenant contact "rinosha Rajan - Service Provider"
+    And user selects lease_brand mall "t0103430 - LORA - Nakheel Mall"
+    And User enters complaint summary as "Test complaint summary" 
+    And user waits "2" seconds for dropdown options to load
+    And user enters service request notes "E2E - SR notes valid"
+    And user uploads service request attachments:
+      | fileName   |
+      | Dummy.pdf  |
+    And user submits service request form
+    # Then service request should be submitted successfully
+
+   @SR_E2E_Positive @SR_FitOutHandOver @Vinoth
+  Scenario: Successful SR creation with all valid inputs
+    When user clicks create service request button
+    And user selects service request category "Fit-out & Handover" and subcategory "Mall"
+    And user selects service request company "Saudi Telecom Company"
+    And user selects lease_brand mall "t0103430 - LORA - Nakheel Mall" for fitout handover
+    And user enters service request title "QA-workpermit(construction - hot)"
+    And user enters service request description "E2E - SR description valid"
+    And user picks from date "29/04/2026" and end date "29/04/2026"
+    And user waits "2" seconds for dropdown options to load
+    And user enters service request notes "E2E - SR notes valid"
+    And user enters service request comment "Test Comments" for fitout handover
+    And user submits service request form
+    # Then service request should be submitted successfully
+
+  @SR_E2E_Positive @SR_FitOutHandOver_IssueLOD @Vinoth
+  Scenario: Successful SR creation with all valid inputs
+    When user clicks create service request button
+    And user selects service request category "Fit-out & Handover" and subcategory "Issue LOD"
+    And user selects service request company "Saudi Telecom Company"
+    And User selects enter brand name as "AxisMall"
+    And user selects service request mall "Hamraa Mall"
+    And user selects unit code "GF025"
+    And user enters service request title "QA-workpermit(construction - hot)"
+    And user enters service request description "E2E - SR description valid"
+    # And user selects LOD status as "Approved (Stamped)"
+    And user enters fitout period in days as "10"
+    And user waits "2" seconds for dropdown options to load
+    And user uploads service request attachments:
+      | fileName   |
+      | Dummy.pdf  |
+    And user submits service request form
+    # Then service request should be submitted successfully
+
+@SR_E2E_Positive @Softfm_checklist(Notdoneyet)
+  Scenario: Successful SR creation with all valid inputs
+    When user clicks create service request button
+    And user selects service request category "Soft FM Checklist" and subcategory "Audit Report"
+    And user selects service request mall "Hamraa Mall"
+    And user clicks initiate audit request button
+    And user enters service request title "QA-workpermit(construction - hot)"
+    And user enters service request description "E2E - SR description valid"
+    And user selects service request company "Saudi Telecom Company"
+    And user selects tenant contact "rinosha Rajan - Service Provider"
+    And user selects lease_brand mall "t0103430 - LORA - Nakheel Mall"
+    And user selects unit code "FC009B"
+    # And user selects unit type "t0103430 - LORA - Nakheel Mall"
+    And user contractor name "NIKE"
+    And user enters contractor mobile number "8765432345678"
+    And user enters type of work as "Electrical"
+    And user enters Location as "Riyadh - Saudi arabia"
+    And user clicks performer section collapse dropdown
+    And user enters performer name as "Working employee"
+    And user enters performer designation as "QA Test"
+    And user enters performer personal qualification as "Under Graduate"
+    And user enters mobile number as "765432345678"
+    And user enters iqama number as "76543456434"
+     And user uploads service request attachments:
+      | fileName   |
+      | Dummy.pdf  |
+    And user enters instructors full name as "Test"
+    And user enters planned date and time collapse dropdown
+    And user picks from date "29/04/2026" and To date "29/04/2026"
+    And user picks first period from time "12:30 PM" and to time "01:30 PM"
+    And user picks second period from time "02:30 PM" and to time "03:30 PM"
+    And user click measures of safety collapse dropdown
+    And user selects "Yes" for "Sprinkler system is switched on"
+    And user selects "No" for "Fire Extinguishers are available"
+    And user selects "Yes" for "Fire hoses are available"
+    And user selects "Yes" for "Equipment for carrying out fire-dangerous works is in appropriate conditions"
+    And user selects "No" for "Volatile flammable liquid and combustible materials are removed."
+    And user selects "Yes" for "Fireproof coatings and metal screens are installed where it is necessary"
+    And user selects "Yes" for "All holes in the floor and walls are covered"
+    And user selects "No" for "After the termination of works the control over the place of hot works during 3-5 hours is organized"
+    And user enters Demanded appendices as "QA Test"
+    And user enters Special Conditions as "QA Test conditions"
+    # And user uploads service request attachments:
+    #   | fileName   |
+    #   | Dummy.pdf  |
+    And user submits work permit service request form
+    Then service request should be submitted successfully
+
+  @SR_E2E_Positive @HSE_Violation @Vinoth
+  Scenario: Successful SR creation with all valid inputs
+    When user clicks create service request button
+    And user selects service request category "Health, Safety & Environment" and subcategory "Violation"
+    And user enters service request title "QA-workpermit(construction - hot)"
+    And user enters event details as "Test event details"
+    And user selects service request mall "Hamraa Mall"
+    And user selects Violation Issuance Date as "29/04/2026"
+    And user enters unit number as "FC009B"
+    And user enters inspector name as "Test Inspector"
+    And user selects service request company "Saudi Telecom Company"
+    And user selects tenant contact "rinosha Rajan - Service Provider"
+    And user selects Date of First Notification as "29/04/2026"
+    And user selcts violation category as "Basic"
+    And user selects notice level as "Prohibition"
+    And user selects violation scope as "General Conditions"
+    And user selects notice number as "Final"
+    And user enters violation description as "Test Violation Description"
+    And user enters who exposed to hazards as "Visitors"
+    And user enters possible consequences as "Test Consequences"
+    And user enters root cause as "Test Root Cause"
+    And user enters required actions as "Test Required Actions"
+     And user uploads service request attachments:
+      | fileName   |
+      | Dummy.pdf  |
+    And user enters comments as "Test Comments"
+    And user clicks save button 
+    And user submits work permit service request form
+    # Then service request should be submitted successfully
+
+   @SR_E2E_Positive @HSE_AuditReport @Vinoth
+  Scenario: Successful SR creation with all valid inputs
+    When user clicks create service request button
+    And user selects service request category "Health, Safety & Environment" and subcategory "Audit Report"
+    And user enters service request title "QA-workpermit(construction - hot)"
+    And user selects service request mall "Hamraa Mall"
+    And user selects audit report Date as "29/04/2026"
+    And user selects service request company "Saudi Telecom Company"
+    And user selects tenant contact "rinosha Rajan - Service Provider"
+     And user uploads service request attachments:
+      | fileName   |
+      | Dummy.pdf  |
+    And user clicks save button 
+    And user submits work permit service request form
+    # Then service request should be submitted successfully
+
+  @SR_E2E_Positive @HSE_IncidentReport @Vinoth
+  Scenario: Successful SR creation with all valid inputs
+    When user clicks create service request button
+    And user selects service request category "Health, Safety & Environment" and subcategory "Incident"
+    And user enters service request title "QA-workpermit(construction - hot)"
+    And user selects service request mall "Hamraa Mall"
+    And user enters location of occurance as "Riyadh - Saudi Arabia"
+    And user selects date of occurance as "29/04/2026"
+    And user selects time of occurance as "Night"
+    And user selects incident type as "Dangerous Occurrence"
+    And user selects service request company "Saudi Telecom Company"
+    And user selects tenant contact "rinosha Rajan - Service Provider"
+     And user uploads service request attachments:
+      | fileName   |
+      | Dummy.pdf  |
+    And user clicks save button 
+    And user submits work permit service request form
+    # Then service request should be submitted successfully
 
   @SR_E2E_Positive @SR_E2E_OptionalEmpty
   Scenario: Successful SR creation with optional fields left empty

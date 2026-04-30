@@ -1,5 +1,7 @@
 package com.web.test.automation.hooks;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -8,6 +10,7 @@ import java.util.Date;
 import com.automation.web.Report_Utils.ReportManager;
 import com.automation.web.Report_Utils.Screenshot_Util;
 import com.automation.web.common_utils.BrowserFactory;
+import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Tracing;
 
 import io.cucumber.java.After;
@@ -15,119 +18,182 @@ import io.cucumber.java.Before;
 import io.cucumber.java.Scenario;
 
 public class CucumberHooks {
-	public static ArrayList<String> passedTests = new ArrayList<String>();
-	public static ArrayList<String> failedTests = new ArrayList<String>();
-	public static ArrayList<String> totalTestCases = new ArrayList<String>();
 
-	private static String str_Execution_TYPE = "Web_UI";
-	public String str_BrowserType = System.getProperty("Browser", "chrome");
-	private static final String SYS_CLOSE_BROWSER_ON_FAILURE = "closeBrowserOnFailure";
-	private static final String SYS_CLOSE_BROWSER_ON_PASS = "closeBrowserOnPass";
-	BrowserFactory browserfactory = BrowserFactory.getInstance();
-	public static String featureFileName;
+    public static ArrayList<String> passedTests = new ArrayList<>();
+    public static ArrayList<String> failedTests = new ArrayList<>();
+    public static ArrayList<String> totalTestCases = new ArrayList<>();
 
-	@Before
-	public void before(Scenario scenario) throws Exception {
-		System.out.println("+++++++++++++++++++before hooks++++++++++++++++++");
+    private static String str_Execution_TYPE = "Web_UI";
+    public String str_BrowserType = System.getProperty("Browser", "chrome");
 
-		if (str_Execution_TYPE.equalsIgnoreCase("Web_UI")) {
-			ReportManager.startTest(scenario.getName(), "SMOKE");
-			System.out.println("Execution started @ " + str_BrowserType + " browser & for type : Web UI");
-			try {
+    private static final String SYS_CLOSE_BROWSER_ON_FAILURE = "closeBrowserOnFailure";
+    private static final String SYS_CLOSE_BROWSER_ON_PASS = "closeBrowserOnPass";
 
-				browserfactory.setBrowser(str_BrowserType);
-				browserfactory.getBrowserContext().tracing()
-						.start(new Tracing.StartOptions().setScreenshots(true).setSnapshots(true));
+    BrowserFactory browserfactory = BrowserFactory.getInstance();
 
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		} else {
-			throw new Exception("[-] Please set exection type[Web_UI] value in cucumberhooks class line number 21");
-		}
+    public static String featureFileName;
 
-		/**
-		 * ReportManager.createAPI_Node(scenario.getName()); String str_Features =
-		 * scenario.getId().split(";")[0]; String[] str_arryFeature =
-		 * str_Features.split("features/"); System.out.println(str_arryFeature);
-		 * String[] str_Feature = str_arryFeature[1].split(".feature"); featureFileName
-		 * = str_Feature[0]; System.out.println(str_Feature[0]);
-		 **/
-	}
+    // 🔥 EXISTING (kept for backward compatibility)
+    private String role = System.getProperty("role", "admin");
 
-	@After
-	public void after(Scenario scenario) throws Exception {
-		System.out.println("+++++++++++++++++++after hooks+++++++++++++++++++");
-		String dateStamp = new SimpleDateFormat("dd.MM.yyyy").format(new Date());
+    // 🔥 NEW: Multi-role support
+    private String roles = System.getProperty("roles", role);
 
-		/*
-		 * if (str_Execution_TYPE.equalsIgnoreCase("Web_UI")) {
-		 * System.out.println("+++++++++++++++++++Web_UI+++++++++++++++++++");
-		 * totalTestCases.add(scenario.getName()); if (scenario.isFailed()) {
-		 * failedTests.add(scenario.getName()); ReportManager.logFail(scenario.getName()
-		 * + " Test case Fail"); System.out.println("Test Fail: " + scenario.getName());
-		 * } else {
-		 * System.out.println("+++++++++++++++++++++onTestSuccess++++++++++++++++++++");
-		 * System.out.println("Test Success: " + scenario.getName());
-		 * ReportManager.logPass(scenario.getName() + " Test case passed");
-		 * ReportManager.endCurrentTest();
-		 * 
-		 * driverFactory.getWebDriver().quit(); passedTests.add(scenario.getName()); }
-		 * 
-		 * }
-		 */
+    private Page page;
 
-		if (browserfactory.getBrowserContext() != null) {
-			try {
-				browserfactory.getBrowserContext().tracing().stop(new Tracing.StopOptions().setPath(Paths.get(
-						System.getProperty("user.dir") + "/TracingReports/" + dateStamp + "/" + scenario.getName() + ".zip")));
-			} catch (Exception e) {
-				// tracing might not be started if browser failed to launch
-				System.out.println("Tracing stop skipped: " + e.getMessage());
-			}
-		}
-		if (str_Execution_TYPE.equalsIgnoreCase("Web_UI")) {
-			totalTestCases.add(scenario.getName());
-			if (totalTestCases.contains(scenario.getName())) {
-				System.out.println("Removing TC from totalTestCases: " + scenario.getName());
-				totalTestCases.remove(scenario.getName());
-			}
-			if (failedTests.contains(scenario.getName())) {
-				System.out.println("Removing TC from failedTests: " + scenario.getName());
-				failedTests.remove(scenario.getName());
-			}
-			if (passedTests.contains(scenario.getName())) {
-				System.out.println("Removing TC from passedTests: " + scenario.getName());
-				passedTests.remove(scenario.getName());
-			}
-			if (scenario.isFailed()) {
-				failedTests.add(scenario.getName());
-				String base64Screenshot = Screenshot_Util.takeScreenshot();
-				if (base64Screenshot != null && !base64Screenshot.isEmpty()) {
-					final byte[] screenshot = base64Screenshot.getBytes();
-					scenario.attach(screenshot, "image/png", featureFileName);
-					scenario.log("ScreenShot Attached");
-				} else {
-					System.out.println("Screenshot not attached: empty base64 string");
-				}
-				if (Boolean.parseBoolean(System.getProperty(SYS_CLOSE_BROWSER_ON_FAILURE, "false"))) {
-					browserfactory.closeBrowser();
-				}
-			} else {
-				passedTests.add(scenario.getName());
-				// In persistent mode, default to keeping the same window across scenarios unless explicitly requested.
-				String sessionMode = System.getProperty("session", "fresh");
-				boolean defaultCloseOnPass = !sessionMode.equalsIgnoreCase("persistent");
-				if (Boolean.parseBoolean(System.getProperty(SYS_CLOSE_BROWSER_ON_PASS, String.valueOf(defaultCloseOnPass)))) {
-					browserfactory.closeBrowser();
-				}
-			}
+    @Before
+    public void before(Scenario scenario) throws Exception {
 
-		} else {
-			throw new Exception("[-] Please set exection type[Web_UI] value in cucumberhooks class line number 21");
-		}
+        System.out.println("+++++++++++++++++++ BEFORE HOOK +++++++++++++++++++");
 
-	}
+        if (!str_Execution_TYPE.equalsIgnoreCase("Web_UI")) {
+            throw new Exception("[-] Please set execution type Web_UI");
+        }
 
+        ReportManager.startTest(scenario.getName(), "SMOKE");
+
+        System.out.println("Execution started on browser: " + str_BrowserType);
+        System.out.println("Running for ROLES: " + roles);
+
+        try {
+            // Step 1: Launch browser
+            browserfactory.setBrowser(str_BrowserType);
+
+            // 🔥 LOOP THROUGH ROLES
+            for (String roleName : roles.split(",")) {
+
+                roleName = roleName.trim();
+
+                System.out.println("🔄 Initializing ROLE: " + roleName);
+
+                Path fullPath = Paths.get(System.getProperty("user.dir"),
+                        "auth/" + roleName.toLowerCase() + ".json");
+
+                Page rolePage = browserfactory.initRoleSession(roleName);
+
+                if (Files.exists(fullPath)) {
+                    System.out.println("✅ Session found → Using saved login for role: " + roleName);
+                } else {
+                    System.out.println("⚠ No session found for role: " + roleName);
+                    System.out.println("👉 Please login manually (OTP). Session will be saved after execution.");
+                }
+
+                if (rolePage == null) {
+                    throw new RuntimeException("Page is NULL after initRoleSession for role: " + roleName);
+                }
+
+                System.out.println("Current URL (" + roleName + "): " + rolePage.url());
+
+                // Start tracing per role
+                if (rolePage.context() != null) {
+                    rolePage.context().tracing().start(
+                            new Tracing.StartOptions()
+                                    .setScreenshots(true)
+                                    .setSnapshots(true)
+                    );
+                }
+
+                // 🔥 Keep first role page as default (for backward compatibility)
+                if (page == null) {
+                    page = rolePage;
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+    @After
+    public void after(Scenario scenario) throws Exception {
+
+        System.out.println("+++++++++++++++++++ AFTER HOOK +++++++++++++++++++");
+
+        String dateStamp = new SimpleDateFormat("dd.MM.yyyy").format(new Date());
+
+        totalTestCases.add(scenario.getName());
+
+        if (scenario.isFailed()) {
+
+            failedTests.add(scenario.getName());
+
+            try {
+                String base64Screenshot = Screenshot_Util.takeScreenshot();
+
+                if (base64Screenshot != null && !base64Screenshot.isEmpty()) {
+                    scenario.attach(base64Screenshot.getBytes(), "image/png", scenario.getName());
+                } else {
+                    System.out.println("⚠ Screenshot skipped: base64 is empty");
+                }
+
+            } catch (Exception e) {
+                System.out.println("⚠ Screenshot failed: " + e.getMessage());
+            }
+
+            if (Boolean.parseBoolean(System.getProperty(SYS_CLOSE_BROWSER_ON_FAILURE, "false"))) {
+                browserfactory.closeBrowser();
+            }
+
+        } else {
+            passedTests.add(scenario.getName());
+        }
+
+        // 🔥 LOOP FOR SESSION SAVE + TRACING STOP
+        for (String roleName : roles.split(",")) {
+
+            roleName = roleName.trim();
+
+            try {
+                Page rolePage = browserfactory.getPage(roleName);
+
+                if (rolePage != null && rolePage.context() != null) {
+
+                    // Stop tracing
+                    rolePage.context().tracing().stop(
+                            new Tracing.StopOptions().setPath(Paths.get(
+                                    System.getProperty("user.dir") +
+                                            "/TracingReports/" + dateStamp + "/" +
+                                            scenario.getName() + "_" + roleName + ".zip"))
+                    );
+
+                    String currentUrl = rolePage.url();
+
+                    // Save session only if logged in
+                    if (!currentUrl.toLowerCase().contains("login")) {
+
+                        Path fullPath = Paths.get(System.getProperty("user.dir"),
+                                "auth/" + roleName.toLowerCase() + ".json");
+
+                        Files.createDirectories(fullPath.getParent());
+
+                        System.out.println("💾 Saving session for role: " + roleName);
+
+                        rolePage.context().storageState(
+                                new com.microsoft.playwright.BrowserContext.StorageStateOptions()
+                                        .setPath(fullPath)
+                        );
+
+                        System.out.println("✅ Session saved for role: " + roleName);
+
+                    } else {
+                        System.out.println("⚠ Session NOT saved for role: " + roleName + " (still on login page)");
+                    }
+                }
+
+            } catch (Exception e) {
+                System.out.println("⚠ Session save failed for role: " + roleName + " | " + e.getMessage());
+            }
+        }
+
+        // Close browser
+        boolean defaultCloseOnPass = true;
+
+        if (Boolean.parseBoolean(System.getProperty(
+                SYS_CLOSE_BROWSER_ON_PASS,
+                String.valueOf(defaultCloseOnPass)))) {
+
+            browserfactory.closeBrowser();
+        }
+    }
 }

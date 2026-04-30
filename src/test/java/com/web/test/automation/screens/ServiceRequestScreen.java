@@ -25,14 +25,14 @@ public class ServiceRequestScreen {
 PlayActions play = new PlayActions();
 
 	// Navigation / list view
-	String serviceRequestMenu = "text=Service Request";
+	String serviceRequestMenu = "//p[text()='Service Request']";
 	String menuIcon = "#expand-sidebar";
 	String allRequestsTab = "//button[text()='All Requests']";
 	String pendingTab = "//button[text()='Pending']";
 	String searchField = "xpath=//input[contains(@placeholder,'Search') or contains(@aria-label,'Search') or @type='search']";
 	String filterButton = "//p[text()='Filter by']";
 	// UI shows "+ Service Request" button; keep it flexible
-	String createSRButton = "xpath=//button[normalize-space(.)='Service Request' or contains(normalize-space(.),'+ Service Request') or contains(normalize-space(.),'Service Request')]";
+	String createSRButton = "//button[text()='Service Request']";
 
 	// Common table/pagination patterns (fallback logic is in code)
 	String tableRowsCss = "table tbody tr";
@@ -77,6 +77,7 @@ PlayActions play = new PlayActions();
 	// Remember last page number for pagination assertions
 	private String lastKnownPageNumber = null;
 	String mallDropdown = "xpath=//div[text()='Select Lease Brand Mall']/following-sibling::div";
+	String mallDropdownForFitout = "xpath=//div[text()='Lease Brand Mall']/following-sibling::div";
 	String mallDropdownOptions = "xpath=//div[contains(@class,'react-select__option')]";
 	// Detailed view (from JSON)
 	String detailsRoot = "css=form";
@@ -88,6 +89,7 @@ PlayActions play = new PlayActions();
 
 	String messagesToggle = "xpath=//p[normalize-space(.)='Messages']";
 	String commentTextarea = "css=div.mb-4 textarea, textarea";
+	String fitoutAndHandoverSRComment = "//textarea[@name='comments']";
 	String commentSubmitButton = "css=div.mb-4 button.group, button:has-text('Submit')";
 	String toastContainer = "css=.Toastify, [role='status'], [aria-live='polite']";
 	// More precise Toastify selectors (helps when container exists but body is empty)
@@ -103,6 +105,98 @@ PlayActions play = new PlayActions();
 	String companyDropdownOptions = "xpath=//div[contains(@class,'react-select__option')]";
 	String tenantContactDropdown = "//div[text()='Select Tenant Contact']/following-sibling::div";
 	String tenantContactDropdownOptions = "xpath=//div[contains(@class,'react-select__option')]";
+
+	String mobileInput = "(//input[@type='tel'])[1]";
+	// Locators (add on top)
+String titleField = "//input[@name='title']";
+String unitCodeDropdown = "xpath=//label[contains(.,'Unit Code')]/following::input[1]";
+String unitTypeDropdown = "xpath=//label[contains(.,'Unit Type')]/following::input[1]";
+String contractorNameField = "//input[@name='contractor_name']";
+String workTypeField = "//textarea[@name='work_type']";
+String locationField = "//textarea[@name='work_location']";
+String cityField = "//input[@name='city']";
+String startDate = "(//div[@locale='[object Object]'])[1]";
+String endDate = "(//div[@locale='[object Object]'])[2]";
+
+String performerSection = "xpath=//button[@type='button']//p[text()='Performer Details']";
+String performerName = "//input[@placeholder='Name']";
+String performerDesignation = "//input[@placeholder='Designation']";
+String performerQualification = "//input[@placeholder='Professional Qualification']";
+String performerMobile = "(//div[text()='Phone']/following-sibling::input[@type='tel'])[2]";
+String iqamaNumber = "//input[@placeholder='Iqama Number']";
+
+String instructorName = "//input[@placeholder='Enter the instructors full name']";
+String plannedSection = "//p[text()='Planned Date and Time']";
+String fromDate = "//input[@name='planneddate.worktimedate']";
+String toDate = "//input[@name='planneddate.completionworkdate']";
+String monthYearLocator = "//div[@class='rmdp-header-values']";
+String nextButtonLocator = "//button[@class='rmdp-arrow-container rmdp-right ']";
+String prevButtonLocator = "//button[@class='rmdp-arrow-container rmdp-left ']";
+String dayLocatorTemplate = "//span[normalize-space()='{day}' and not(contains(@class,'disabled'))]";
+
+String firstFromTime = "((//p[text()='Time(from)'])[1]/following::div[@class='rmdp-container '])[1]";
+String firstToTime = "((//p[text()='Time(from)'])[1]/following::div[@class='rmdp-container '])[2]";
+String secondFromTime = "((//p[text()='Time(from)'])[1]/following::div[@class='rmdp-container '])[4]";
+String secondToTime = "((//p[text()='Time(from)'])[1]/following::div[@class='rmdp-container '])[5]";
+
+String hourValueLocator = "//input[@name='hour']";
+String minuteValueLocator = "//input[@name='minute']";
+String meridianValueLocator = "//div[@class='rmdp-am']";
+String hourUpLocator = "(//button[@class='rmdp-arrow-container rmdp-up '])[1]";
+String hourDownLocator = "(//button[@class='rmdp-arrow-container rmdp-down '])[1]";
+String minuteUpLocator = "(//button[@class='rmdp-arrow-container rmdp-up '])[2]";	
+String minuteDownLocator = "(//button[@class='rmdp-arrow-container rmdp-down '])[2]";
+String meridianUpToggleLocator = "(//button[@class='rmdp-arrow-container rmdp-up '])[3]";
+
+
+String safetySection = "//button[@type='button']//p[text()='Measures of Safety']";
+String safetyCheckboxes = "xpath=//input[@type='checkbox']";
+
+String appendicesField = "//textarea[@name='demand_appendices']";
+String specialConditionsField = "//textarea[@name='special_conditions']";
+
+String complaintSummaryField = "//textarea[@name='complaint_summary']";
+
+String brandDropdown = "xpath=//div[text()='Enter brand Name']/following-sibling::div";
+String brandDropdownOptions = "xpath=//div[contains(@class,'react-select__option')]";
+String fitoutPeriod = "xpath=//input[@name='fitout_period']";
+String lodStatusOptions = "//label[contains(@for,'lod_status')]";
+
+String initiateAuditReportButton = "//button[text()='Initiate Audit']";
+
+//HSE Violation locators
+String eventField = "//input[@name='event']";
+
+String violationIssuanceDate = "//input[@name='violation_issuance_date']";
+String firstNotificationDate = "//input[@name='date_of_first_notification']";
+
+String unitNumberField = "//input[@name='unit_no']";
+String inspectorNameField = "//input[@name='inspector_name']";
+
+String violationScopeDropdown = "//select[@name='violation_scope']";
+String noticeNumberDropdown = "//select[@name='notice_no']";
+
+String exposedToHazards = "//select[@name='who_exposed_to_hazard']";
+String commentsField = "//textarea[contains(@name,'comment')]";
+String saveButton = "//button[contains(.,'Save')]";
+
+String violationCategoryDropdown = "//select[@name='violation_category']";
+String noticeLevelDropdown = "//select[@name='notice_level']";
+
+String violationDescriptionField = "//textarea[@name='violation_description']";
+String rootCauseField = "//textarea[@name='initial_root_causes']";
+String possibleConsequencesField = "//textarea[@name='possible_consequences']";
+String requiredAction = "//textarea[@name='required_action']";
+
+
+// Common dropdown options (already used in your framework)
+String dropdownOptions = "//div[contains(@class,'react-select__option')]";
+String auditReportDate = "//input[@name='audit_report_date']";
+
+String incidentTypeDropdown = "//select[@name='incident_type']";
+String timeOfOccurance = "//select[@name='time_of_occurrence']";
+String dateOfOccurance = "//input[@name='date_of_occurrence']";
+String locationOfOccuranceField = "//input[@name='location_of_occurrence']";
 
 public void openServiceRequestMenu(){
 play.click(serviceRequestMenu,"Service Request Menu");
@@ -139,9 +233,6 @@ play.click(createSRButton,"Create SR");
 		// For TC_001 we treat "page + controls visible" as enough to say list loaded.
 		assertListViewControlsVisible();
 	}
-
-
-
 
 	public void assertSearchAvailable() {
 		play.waitForVisible(searchField, 8000, "Search input");
@@ -181,12 +272,13 @@ play.click(createSRButton,"Create SR");
 		play.clear(descriptionField, "Description");
 	}
 
-	public void submitRequestForm() {
-		play.waitForVisible(submitButton, 8000, "Submit button");
+	public void submitRequestForm() throws InterruptedException {
+		play.waitForVisible(submitButton, 5000, "Submit button");
+		Thread.sleep(2000); // Short wait to allow any dynamic validation messages to appear before submission
 		play.click(submitButton, "Submit");
 	}
 
-	public void submitRequestFormWithExtendedWait() {
+	public void submitRequestFormWithExtendedWait() throws InterruptedException {
 		submitRequestForm();
 		// Longer wait to accommodate slow network/server processing
 		waitForSubmissionResult(60000);
@@ -605,6 +697,11 @@ play.click(createSRButton,"Create SR");
 		play.fill(commentTextarea, comment, "Comment");
 	}
 
+	public void enterCommentForFH(String comment) {
+		play.waitForVisible(fitoutAndHandoverSRComment, 8000, "Comment textarea for fitout and handover");
+		play.fill(fitoutAndHandoverSRComment, comment, "Comment for fitout and handover");
+	}
+
 	public void submitComment() {
 		play.waitForVisible(commentSubmitButton, 8000, "Comment Submit");
 		play.click(commentSubmitButton, "Submit comment");
@@ -714,11 +811,12 @@ play.click(createSRButton,"Create SR");
 	public void selectCompany(String company) throws InterruptedException {
 		Thread.sleep(5000);
 		play.click(companyDropdown, company);
+		Thread.sleep(8000);
 		play.selectOptionFromDropdown(companyDropdownOptions, company);
 	}
 
 	public void selectTenantContact(String contact) throws InterruptedException {
-		Thread.sleep(5000);
+		Thread.sleep(4000);
 		play.click(tenantContactDropdown, contact);
 		play.selectOptionFromDropdown(tenantContactDropdownOptions, contact);
 	}
@@ -730,10 +828,28 @@ play.click(createSRButton,"Create SR");
 	}
 
 	public void selectLeaseBrandMall1(String mall) throws InterruptedException {
-		Thread.sleep(5000);
+		Thread.sleep(4000);
 		play.waitForSelector(mallDropdown, 2000, "Mall dropdown");
 		play.click(mallDropdown, mall);
 		play.selectOptionFromDropdown(mallDropdownOptions, mall);
+	}
+
+	public void selectLeaseBrandMall1ForFH(String mall) throws InterruptedException {
+		Thread.sleep(4000);
+		play.waitForSelector(mallDropdownForFitout, 2000, "Mall dropdown");
+		play.click(mallDropdownForFitout, mall);
+		play.selectOptionFromDropdown(mallDropdownOptions, mall);
+	}
+
+	public void enterMobileNumber(String mobile) {
+		assertSrDetailsSectionVisible();
+		Locator input = play.getPage().locator(mobileInput);
+		if (input.count() == 0) {
+			play.verifyText("MOBILE_INPUT_NOT_FOUND", "MOBILE_INPUT_FOUND");
+			return;
+		}
+		input.first().click();
+		input.first().fill(mobile);
 	}
 
 	public void waitForDropdownOptions(String seconds) {
@@ -763,7 +879,7 @@ play.click(createSRButton,"Create SR");
 
 	public void enterDescription(String description) {
 		assertSrDetailsSectionVisible();
-		String descInDetails = "xpath=//*[@id='sr_details']//textarea[contains(@aria-label,'Type here') or self::textarea]";
+		String descInDetails = "xpath=//textarea[@name='description']";
 		play.fill(descInDetails, description, "Description");
 	}
 
@@ -1449,5 +1565,262 @@ play.click(createSRButton,"Create SR");
 		}
 		return null;
 	}
+
+	public void enterServiceRequestTitle(String title) {
+		play.fill(titleField, title, "Title");
+	}
+	
+	public void selectUnitCode(String value) {
+		selectReactDropdownValue(play.getPage().locator(unitCodeDropdown), value);
+	}
+	
+	public void selectUnitType(String value) {
+		selectReactDropdownValue(play.getPage().locator(unitTypeDropdown), value);
+	}
+	
+	public void enterContractorName(String name) {
+		play.fill(contractorNameField, name, "Contractor Name");
+	}
+	
+	public void enterTypeOfWork(String work) {
+		play.fill(workTypeField, work, "Work Type");
+	}
+	
+	public void enterLocation(String location) {
+		play.fill(locationField, location, "Location");
+	}
+
+	public void enterLocationForFH(String location) {
+		play.clear(cityField,  "Clear City field before filling");
+		play.fill(cityField, location, "Location for FH");
+	}
+	
+	public void openPerformerSection() {
+		play.click(performerSection, "Performer Section");
+	}
+	
+	public void enterPerformerName(String name) {
+		play.fill(performerName, name, "Performer Name");
+	}
+	
+	public void enterPerformerDesignation(String value) {
+		play.fill(performerDesignation, value, "Designation");
+	}
+	
+	public void enterPerformerQualification(String value) {
+		play.fill(performerQualification, value, "Qualification");
+	}
+	
+	public void enterPerformerMobile(String value) {
+		play.fill(performerMobile, value, "Performer Mobile");
+	}
+	
+	public void enterIqamaNumber(String value) {
+		play.fill(iqamaNumber, value, "Iqama");
+	}
+	
+	public void enterInstructorName(String value) {
+		play.fill(instructorName, value, "Instructor");
+	}
+	
+	public void openPlannedDateSection() {
+		play.click(plannedSection, "Planned Date Section");
+	}
+	
+	public void selectFromToDate(String from, String to) {
+		play.selectDate(fromDate, monthYearLocator, nextButtonLocator, prevButtonLocator, dayLocatorTemplate, from, "From Date");
+		play.selectDate(toDate, monthYearLocator, nextButtonLocator, prevButtonLocator, dayLocatorTemplate, to, "To Date");
+	}
+
+	public void selectStartEndDate(String start, String end) throws InterruptedException {
+		play.selectDate(startDate, monthYearLocator, nextButtonLocator, prevButtonLocator, dayLocatorTemplate, start, "From Date");
+		Thread.sleep(1000);
+		play.selectDate(endDate, monthYearLocator, nextButtonLocator, prevButtonLocator, dayLocatorTemplate, end, "To Date");
+	}
+	
+	public void selectFirstPeriod(String fromTime, String toTime) {
+		play.selectTime(firstFromTime,hourValueLocator, minuteValueLocator, meridianValueLocator, hourUpLocator, hourDownLocator, minuteUpLocator, minuteDownLocator, meridianUpToggleLocator, fromTime, "First From");
+		play.selectTime(firstToTime, hourValueLocator, minuteValueLocator, meridianValueLocator, hourUpLocator, hourDownLocator, minuteUpLocator, minuteDownLocator, meridianUpToggleLocator, toTime, "First To");
+	}
+	
+	public void selectSecondPeriod(String fromTime, String toTime) {
+		play.selectTime(secondFromTime,hourValueLocator, minuteValueLocator, meridianValueLocator, hourUpLocator, hourDownLocator, minuteUpLocator, minuteDownLocator, meridianUpToggleLocator, fromTime, "First From");
+		play.selectTime(secondToTime, hourValueLocator, minuteValueLocator, meridianValueLocator, hourUpLocator, hourDownLocator, minuteUpLocator, minuteDownLocator, meridianUpToggleLocator, toTime, "First To");
+	}
+
+	public void selectMeasureOption(String questionKey, String value) {
+        // Convert question → key mapping
+    String key = getQuestionKey(questionKey);
+
+    String locator = "//input[@name='measureofsafety." + key + "' and contains(@value,'" + value + "')]";
+
+    // Wait for the element to be visible before scrolling
+    play.waitForVisible(locator, 10000, "Safety measure: " + questionKey);
+    play.scrollToElement(locator, questionKey);
+    play.click(locator, questionKey + " -> " + value);
+    }
+	
+	private String getQuestionKey(String question) {
+
+    switch (question.trim()) {
+
+        case "Sprinkler system is switched on":
+            return "sprinker_on";
+
+        case "Fire Extinguishers are available":
+            return "fire_extinguisher";
+
+        case "Fire hoses are available":
+            return "fire_hoses";
+
+        case "Equipment for carrying out fire-dangerous works is in appropriate conditions":
+            return "equipment_for_carryingout";
+
+        case "Volatile flammable liquid and combustible materials are removed.":
+            return "volatile_remove";
+
+        case "Fireproof coatings and metal screens are installed where it is necessary":
+            return "fire_proofcoating";
+
+        case "All holes in the floor and walls are covered":
+            return "all_Holes_in_floorandWalls";
+
+        case "After the termination of works the control over the place of hot works during 3-5 hours is organized":
+            return "work_hour_organized";
+
+        default:
+            throw new RuntimeException("Unknown question: " + question);
+    }
+}
+	public void openSafetySection() {
+		play.click(safetySection, "Safety Section");
+	}
+	
+	public void selectAllSafetyMeasures() {
+		Locator checkboxes = play.getPage().locator(safetyCheckboxes);
+		for (int i = 0; i < checkboxes.count(); i++) {
+			if (!checkboxes.nth(i).isChecked()) {
+				checkboxes.nth(i).click();
+			}
+		}
+	}
+	
+	public void enterAppendices(String value) {
+		play.fill(appendicesField, value, "Appendices");
+	}
+	
+	public void enterSpecialConditions(String value) {
+		play.fill(specialConditionsField, value, "Special Conditions");
+	}
+
+	public void enterComplaintSummary(String summary) {
+		play.fill(complaintSummaryField, summary, "Complaint Summary");
+
+    }
+
+	public void selectBrand(String brand) throws InterruptedException {
+		Thread.sleep(4000);
+		play.waitForSelector(brandDropdown, 2000, "Brand dropdown");
+		play.click(brandDropdown, "Brand dropdown");
+		play.selectOptionFromDropdown(brandDropdownOptions, brand);
+
+    }
+
+	public void enterFitoutPeriod(String value) {
+		play.fill(fitoutPeriod, value, "Fitout Period");
+    }
+
+	public void selectLODStatus(String value) {
+		play.selectOptionFromDropdown(brandDropdownOptions, value);
+    }
+
+	public void clickInitiateAuditRequestButton(){
+		play.click(initiateAuditReportButton, "Initiate Audit Request Button" );
+	}
+
+	public void enterEventDetails(String event) {
+    play.fill(eventField, event, "Event");
+}
+
+public void selectViolationIssuanceDate(String date) {
+   play.selectDate(violationIssuanceDate, monthYearLocator, nextButtonLocator, prevButtonLocator, dayLocatorTemplate, date, "violation Date");
+}
+
+public void selectAuditReportDate(String date) {
+   play.selectDate(auditReportDate, monthYearLocator, nextButtonLocator, prevButtonLocator, dayLocatorTemplate, date, "Audit Report Date");
+}
+
+public void selectFirstNotificationDate(String date) {
+    play.selectDate(firstNotificationDate, monthYearLocator, nextButtonLocator, prevButtonLocator, dayLocatorTemplate, date, "first notice Date");
+}
+
+public void enterUnitNumber(String unit) {
+    play.fill(unitNumberField, unit, "Unit Number");
+}
+
+public void enterInspectorName(String name) {
+    play.fill(inspectorNameField, name, "Inspector Name");
+}
+
+public void selectViolationScope(String scope) {
+	play.selectOptionsByValue(violationScopeDropdown, scope);
+}
+
+public void selectNoticeNumber(String number) {
+	play.selectOptionsByValue(noticeNumberDropdown, number);
+}
+
+public void enterViolationDescription(String desc) {
+    play.fill(violationDescriptionField, desc, "Violation Description");
+}
+
+public void enterExposedToHazards(String value) {
+    play.selectOptionsByValue(exposedToHazards, value);
+}
+
+public void enterPossibleConsequences(String value) {
+    play.fill(possibleConsequencesField, value, "Possible Consequences");
+}
+
+public void enterRootCause(String value) {
+    play.fill(rootCauseField, value, "Root Cause");
+}
+
+public void enterRequiredActions(String value) {
+    play.fill(requiredAction, value, "Required Actions");
+}
+
+public void enterComments(String value) {
+    play.fill(commentsField, value, "Comments");
+}
+
+public void selectViolationCategory(String category) {
+	play.selectOptionsByValue(violationCategoryDropdown, category);
+}
+
+public void selectNoticeLevel(String level) {
+    play.selectOptionsByValue(noticeLevelDropdown, level);
+}
+
+public void clickSaveButton(){
+	play.click(saveButton, "Save Button" );
+}
+
+public void enterLocationOfOccurance(String location) {
+	play.fill(locationOfOccuranceField, location, "Location of Occurance");
+
+}
+
+public void selectDateOfOccurrence(String date) {
+	play.selectDate(dateOfOccurance, monthYearLocator, nextButtonLocator, prevButtonLocator, dayLocatorTemplate, date, "Date of Occurance");
+}
+
+public void selectTimeOfOccurrence(String time) {
+	play.selectOptionsByValue(timeOfOccurance, time);
+}
+
+public void selectIncidentType(String type) {
+	play.selectOptionsByValue(incidentTypeDropdown, type);
+}
 
 }

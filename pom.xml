@@ -25,6 +25,8 @@
 		<browserInstances>1</browserInstances>
 		<cucumber.version>7.4.1</cucumber.version>
 		<selenium.version>4.9.1</selenium.version>
+		<maven.test.skip>false</maven.test.skip>
+		<maven.surefire.plugin.version>3.1.0</maven.surefire.plugin.version>
 
 	</properties>
 	<build>
@@ -32,6 +34,10 @@
 			<plugin>
 				<artifactId>maven-clean-plugin</artifactId>
 				<version>3.2.0</version>
+				<configuration>
+					<failOnError>false</failOnError>
+					<retryOnError>true</retryOnError>
+				</configuration>
 				<executions>
 					<execution>
 						<id>default-clean</id>
@@ -49,6 +55,9 @@
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>
+					<compilerArgs>
+						<arg>-Xlint:-options</arg>
+					</compilerArgs>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -77,6 +86,7 @@
 					<!-- Retry each failing test once -->
 					<rerunFailingTestsCount>1</rerunFailingTestsCount>
 					<testFailureIgnore>true</testFailureIgnore>
+					<useSystemClassLoader>false</useSystemClassLoader>
 					<systemPropertyVariables>
 						<Browser>${Browser}</Browser>
 						<executionType>${execType}</executionType>
@@ -86,10 +96,10 @@
 						<!-- You can add more than 1 XML files here also -->
 						<!-- <suiteXmlFile>testng.xml</suiteXmlFile> -->
 						<!--<suiteXmlFile>${suiteFile}</suiteXmlFile> -->
-						<suiteXmlFile>src/test/resources/NG_XML/WebPlay.xml</suiteXmlFile>
+						<suiteXmlFile>${basedir}/src/test/resources/NG_XML/WebPlay.xml</suiteXmlFile>
 					</suiteXmlFiles>
 					<argLine>
-						-javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
+						-Xmx2G -Xms1G -XX:+UseG1GC -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
 					</argLine>
 				</configuration>
 				<dependencies>
@@ -433,10 +443,17 @@
 			<version>5.1.2</version>
 		</dependency>
 
+		<!-- SLF4J API and Logback implementation -->
 		<dependency>
-    <groupId>com.sun.mail</groupId>
-    <artifactId>javax.mail</artifactId>
-    <version>1.6.2</version>
-</dependency>
-	</dependencies>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.7.36</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.2.11</version>
+		</dependency>
+
+		</dependencies>
 </project>
